@@ -1,6 +1,7 @@
 // src/components/Calculators/BoatsAndStreams.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CalculatorBase from './CalculatorBase';
+import '../../styles/calculator.css';
 
 const BoatsAndStreams = () => {
   const [values, setValues] = useState({
@@ -14,6 +15,16 @@ const BoatsAndStreams = () => {
   const [result, setResult] = useState(null);
   const [calcType, setCalcType] = useState('speed');
   const [formulaPreview, setFormulaPreview] = useState('');
+  const [animation, setAnimation] = useState(false);
+  const [visualization, setVisualization] = useState(null);
+
+  // Animation effect
+  useEffect(() => {
+    if (animation) {
+      const timer = setTimeout(() => setAnimation(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [animation]);
 
   const examples = [
     {
@@ -94,6 +105,7 @@ const BoatsAndStreams = () => {
   const calculate = (addToHistory) => {
     let resultObj = {};
     let steps = [];
+    let vizData = {};
 
     if (calcType === 'speed') {
       const boatSpeed = parseFloat(values.boatSpeed);
@@ -133,6 +145,14 @@ const BoatsAndStreams = () => {
         ratio: ratio.toFixed(2),
         steps
       };
+
+      vizData = {
+        type: 'speed',
+        boatSpeed,
+        streamSpeed,
+        downstreamSpeed,
+        upstreamSpeed
+      };
     } else if (calcType === 'downstream') {
       const distance = parseFloat(values.distanceDownstream);
       const time = parseFloat(values.timeDownstream);
@@ -157,6 +177,13 @@ const BoatsAndStreams = () => {
       resultObj = {
         downstreamSpeed: speed.toFixed(2),
         steps
+      };
+
+      vizData = {
+        type: 'downstream',
+        distance,
+        time,
+        speed
       };
     } else if (calcType === 'upstream') {
       const distance = parseFloat(values.distanceUpstream);
@@ -183,9 +210,18 @@ const BoatsAndStreams = () => {
         upstreamSpeed: speed.toFixed(2),
         steps
       };
+
+      vizData = {
+        type: 'upstream',
+        distance,
+        time,
+        speed
+      };
     }
 
     setResult(resultObj);
+    setVisualization(vizData);
+    setAnimation(true);
 
     addToHistory({
       description: `${calcType === 'speed' ? 'Boat and stream speeds' : 
@@ -277,6 +313,52 @@ const BoatsAndStreams = () => {
     }
   };
 
+  const renderVisualization = () => {
+    if (!visualization) return null;
+
+    return (
+      <div className="visualization">
+        <h3>Visualization:</h3>
+        <div className="river-animation">
+          <div className="river">
+            {calcType === 'speed' && (
+              <>
+                <div className="boat downstream" 
+                  style={{ 
+                    animation: `moveBoat ${10/visualization.downstreamSpeed}s linear infinite`
+                  }}>
+                  Downstream: {visualization.downstreamSpeed} km/h
+                </div>
+                <div className="boat upstream"
+                  style={{ 
+                    animation: `moveBoat ${10/visualization.upstreamSpeed}s linear infinite reverse`
+                  }}>
+                  Upstream: {visualization.upstreamSpeed} km/h
+                </div>
+                <div className="stream-flow" 
+                  style={{ 
+                    animation: `flowWater ${10/visualization.streamSpeed}s linear infinite`
+                  }}>
+                  Stream: {visualization.streamSpeed} km/h
+                </div>
+              </>
+            )}
+            {(calcType === 'downstream' || calcType === 'upstream') && (
+              <div className="boat"
+                style={{ 
+                  animation: `moveBoat ${10/visualization.speed}s linear infinite`,
+                  animationDirection: calcType === 'upstream' ? 'reverse' : 'normal'
+                }}>
+                {calcType === 'downstream' ? 'Downstream' : 'Upstream'}: {visualization.speed} km/h
+              </div>
+            )}
+          </div>
+          <div className="river-bank"></div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <CalculatorBase 
       title="Boats and Streams Calculator" 
@@ -309,6 +391,8 @@ const BoatsAndStreams = () => {
           <button onClick={() => calculate(addToHistory)} className="calculate-btn">
             Calculate
           </button>
+
+          {renderVisualization()}
 
           {result && (
             <div className="result">

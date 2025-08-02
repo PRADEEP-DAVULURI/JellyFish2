@@ -729,3 +729,95 @@
   color: #f1e8e8;
 }
 
+/* Boats and Streams Visualization */
+.river-animation {
+  margin: 20px 0;
+  position: relative;
+  height: 120px;
+  overflow: hidden;
+}
+
+.river {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background-color: #1e90ff;
+  background-image: linear-gradient(to bottom, #1e90ff, #00bfff);
+}
+
+.river-bank {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background-color: #8b4513;
+}
+
+.boat {
+  position: absolute;
+  width: 60px;
+  height: 30px;
+  background-color: #8b4513;
+  border-radius: 5px;
+  top: 40px;
+  left: 10%;
+  text-align: center;
+  color: white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.boat:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 20px solid #f5f5dc;
+  top: -20px;
+  left: 15px;
+}
+
+.downstream {
+  background-color: #4682b4;
+}
+
+.upstream {
+  background-color: #556b2f;
+}
+
+.stream-flow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 50px 50px;
+  z-index: 1;
+}
+
+@keyframes moveBoat {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(80vw); }
+}
+
+@keyframes flowWater {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
+}
+
