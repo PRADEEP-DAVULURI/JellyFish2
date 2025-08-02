@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/JellyFish2/static/css/main.a2b69e7d.css",
+    "main.js": "/JellyFish2/static/js/main.4499a606.js",
+    "index.html": "/JellyFish2/index.html",
+    "main.a2b69e7d.css.map": "/JellyFish2/static/css/main.a2b69e7d.css.map",
+    "main.4499a606.js.map": "/JellyFish2/static/js/main.4499a606.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a2b69e7d.css",
+    "static/js/main.4499a606.js"
+  ]
+}
