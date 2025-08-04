@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/JellyFish2/static/css/main.c6ba363f.css",
-    "main.js": "/JellyFish2/static/js/main.bbc040c4.js",
+    "main.css": "/JellyFish2/static/css/main.5abf4eca.css",
+    "main.js": "/JellyFish2/static/js/main.18d2e75f.js",
     "index.html": "/JellyFish2/index.html",
-    "main.c6ba363f.css.map": "/JellyFish2/static/css/main.c6ba363f.css.map",
-    "main.bbc040c4.js.map": "/JellyFish2/static/js/main.bbc040c4.js.map"
+    "main.5abf4eca.css.map": "/JellyFish2/static/css/main.5abf4eca.css.map",
+    "main.18d2e75f.js.map": "/JellyFish2/static/js/main.18d2e75f.js.map"
   },
   "entrypoints": [
-    "static/css/main.c6ba363f.css",
-    "static/js/main.bbc040c4.js"
+    "static/css/main.5abf4eca.css",
+    "static/js/main.18d2e75f.js"
   ]
 }
