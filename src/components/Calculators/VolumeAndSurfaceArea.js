@@ -1,42 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import CalculatorBase from './CalculatorBase';
 import '../../styles/calculator.css';
 
 const VolumeAndSurfaceArea = () => {
   const [shape, setShape] = useState('cube');
   const [dimensions, setDimensions] = useState({
-    // Cube
     side: '',
-    // Cuboid
     length: '',
     width: '',
     height: '',
-    // Sphere/Cylinder/Cone
     radius: '',
-    // Cylinder/Cone
-    height: '',
-    // Cone
     slantHeight: '',
-    // Pyramid
     baseLength: '',
     baseWidth: '',
     pyramidHeight: '',
-    // Triangular Prism
     prismBase: '',
     prismHeight: '',
     prismLength: '',
-    // Torus
     majorRadius: '',
     minorRadius: '',
-    // Hemisphere
     hemisphereRadius: '',
-    // Ellipsoid
     aAxis: '',
     bAxis: '',
     cAxis: ''
   });
   const [result, setResult] = useState(null);
   const [formulaPreview, setFormulaPreview] = useState('');
+  const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+  const rendererRef = useRef(null);
+  const cameraRef = useRef(null);
+  const controlsRef = useRef(null);
+  const shapeMeshRef = useRef(null);
 
   const examples = [
     {
@@ -47,6 +44,7 @@ const VolumeAndSurfaceArea = () => {
       onTry: () => {
         setShape('cube');
         setDimensions({
+          ...dimensions,
           side: '5',
           radius: '',
           height: ''
@@ -61,6 +59,7 @@ const VolumeAndSurfaceArea = () => {
       onTry: () => {
         setShape('sphere');
         setDimensions({
+          ...dimensions,
           radius: '4',
           side: '',
           height: ''
@@ -75,6 +74,7 @@ const VolumeAndSurfaceArea = () => {
       onTry: () => {
         setShape('cylinder');
         setDimensions({
+          ...dimensions,
           radius: '3',
           height: '7',
           side: ''
@@ -89,6 +89,7 @@ const VolumeAndSurfaceArea = () => {
       onTry: () => {
         setShape('cone');
         setDimensions({
+          ...dimensions,
           radius: '5',
           height: '12',
           side: ''
@@ -97,7 +98,241 @@ const VolumeAndSurfaceArea = () => {
     }
   ];
 
-  const updateFormulaPreview = () => {
+  // Initialize Three.js scene
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x222222);
+    sceneRef.current = scene;
+
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas, 
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    rendererRef.current = renderer;
+
+    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    camera.position.z = 5;
+    cameraRef.current = camera;
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controlsRef.current = controls;
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    // Add axes helper
+    const axesHelper = new THREE.AxesHelper(3);
+    scene.add(axesHelper);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      controls.dispose();
+      renderer.dispose();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Helper functions for custom geometries
+  const createPyramidGeometry = (length, width, height) => {
+    const geometry = new THREE.BufferGeometry();
+    
+    const vertices = new Float32Array([
+      -length/2, -width/2, 0,
+      length/2, -width/2, 0,
+      length/2, width/2, 0,
+      -length/2, width/2, 0,
+      0, 0, height
+    ]);
+    
+    const indices = [
+      0, 1, 2,
+      0, 2, 3,
+      0, 1, 4,
+      1, 2, 4,
+      2, 3, 4,
+      3, 0, 4
+    ];
+    
+    geometry.setIndex(indices);
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    
+    return geometry;
+  };
+
+  const createTriangularPrismGeometry = (base, height, length) => {
+    const geometry = new THREE.BufferGeometry();
+    
+    const halfBase = base / 2;
+    const halfLength = length / 2;
+    
+    const vertices = new Float32Array([
+      -halfBase, -height/2, halfLength,
+      halfBase, -height/2, halfLength,
+      0, height/2, halfLength,
+      -halfBase, -height/2, -halfLength,
+      halfBase, -height/2, -halfLength,
+      0, height/2, -halfLength
+    ]);
+    
+    const indices = [
+      0, 1, 2,
+      5, 4, 3,
+      0, 3, 4,
+      0, 4, 1,
+      0, 2, 3,
+      2, 5, 3,
+      1, 4, 2,
+      2, 4, 5
+    ];
+    
+    geometry.setIndex(indices);
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    
+    return geometry;
+  };
+
+  const createEllipsoidGeometry = (a, b, c) => {
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
+    const position = geometry.attributes.position;
+    
+    for (let i = 0; i < position.count; i++) {
+      position.setX(i, position.getX(i) * a);
+      position.setY(i, position.getY(i) * b);
+      position.setZ(i, position.getZ(i) * c);
+    }
+    
+    position.needsUpdate = true;
+    geometry.computeVertexNormals();
+    
+    return geometry;
+  };
+
+  // Update visualization when shape or dimensions change
+  useEffect(() => {
+    if (!sceneRef.current || !cameraRef.current) return;
+
+    const scene = sceneRef.current;
+    
+    // Remove previous shape
+    if (shapeMeshRef.current) {
+      scene.remove(shapeMeshRef.current);
+      shapeMeshRef.current = null;
+    }
+
+    // Create new shape based on current selection
+    let geometry;
+    const material = new THREE.MeshPhongMaterial({ 
+      color: 0x3498db,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide,
+      wireframe: false
+    });
+
+    try {
+      switch(shape) {
+        case 'cube':
+          const side = dimensions.side ? parseFloat(dimensions.side) : 1;
+          geometry = new THREE.BoxGeometry(side, side, side);
+          break;
+        case 'cuboid':
+          const l = dimensions.length ? parseFloat(dimensions.length) : 2;
+          const w = dimensions.width ? parseFloat(dimensions.width) : 1;
+          const h = dimensions.height ? parseFloat(dimensions.height) : 1;
+          geometry = new THREE.BoxGeometry(l, w, h);
+          break;
+        case 'sphere':
+          const r = dimensions.radius ? parseFloat(dimensions.radius) : 1;
+          geometry = new THREE.SphereGeometry(r, 32, 32);
+          break;
+        case 'cylinder':
+          const cr = dimensions.radius ? parseFloat(dimensions.radius) : 1;
+          const ch = dimensions.height ? parseFloat(dimensions.height) : 2;
+          geometry = new THREE.CylinderGeometry(cr, cr, ch, 32);
+          break;
+        case 'cone':
+          const cor = dimensions.radius ? parseFloat(dimensions.radius) : 1;
+          const coh = dimensions.height ? parseFloat(dimensions.height) : 2;
+          geometry = new THREE.ConeGeometry(cor, coh, 32);
+          break;
+        case 'pyramid':
+          const bl = dimensions.baseLength ? parseFloat(dimensions.baseLength) : 2;
+          const bw = dimensions.baseWidth ? parseFloat(dimensions.baseWidth) : 2;
+          const ph = dimensions.pyramidHeight ? parseFloat(dimensions.pyramidHeight) : 2;
+          geometry = createPyramidGeometry(bl, bw, ph);
+          break;
+        case 'prism':
+          const pb = dimensions.prismBase ? parseFloat(dimensions.prismBase) : 1;
+          const prismH = dimensions.prismHeight ? parseFloat(dimensions.prismHeight) : 1;
+          const pl = dimensions.prismLength ? parseFloat(dimensions.prismLength) : 2;
+          geometry = createTriangularPrismGeometry(pb, prismH, pl);
+          break;
+        case 'torus':
+          const R = dimensions.majorRadius ? parseFloat(dimensions.majorRadius) : 1;
+          const mr = dimensions.minorRadius ? parseFloat(dimensions.minorRadius) : 0.3;
+          geometry = new THREE.TorusGeometry(R, mr, 16, 32);
+          break;
+        case 'hemisphere':
+          const hr = dimensions.hemisphereRadius ? parseFloat(dimensions.hemisphereRadius) : 1;
+          geometry = new THREE.SphereGeometry(hr, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+          break;
+        case 'ellipsoid':
+          const a = dimensions.aAxis ? parseFloat(dimensions.aAxis) : 1.5;
+          const b = dimensions.bAxis ? parseFloat(dimensions.bAxis) : 1;
+          const c = dimensions.cAxis ? parseFloat(dimensions.cAxis) : 0.5;
+          geometry = createEllipsoidGeometry(a, b, c);
+          break;
+        default:
+          geometry = new THREE.BoxGeometry(1, 1, 1);
+      }
+
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      shapeMeshRef.current = mesh;
+
+      // Adjust camera position based on shape size
+      if (geometry.boundingSphere) {
+        const radius = geometry.boundingSphere.radius;
+        cameraRef.current.position.z = radius * 3;
+        cameraRef.current.lookAt(0, 0, 0);
+      }
+    } catch (e) {
+      console.error("Error creating shape:", e);
+    }
+  }, [shape, dimensions]);
+
+  // Memoized formula preview update
+  const updateFormulaPreview = useCallback(() => {
     switch(shape) {
       case 'cube':
         const s = dimensions.side || 's';
@@ -153,7 +388,12 @@ const VolumeAndSurfaceArea = () => {
       default:
         setFormulaPreview('');
     }
-  };
+  }, [shape, dimensions]);
+
+  // Update formula preview when shape or dimensions change
+  useEffect(() => {
+    updateFormulaPreview();
+  }, [updateFormulaPreview]);
 
   const calculate = (addToHistory) => {
     let volume = 0;
@@ -344,7 +584,6 @@ const VolumeAndSurfaceArea = () => {
           return;
         }
         volume = (4/3) * Math.PI * a * b * c;
-        // Approximation for surface area
         const p = 1.6075;
         surfaceArea = 4 * Math.PI * Math.pow((Math.pow(a*b, p) + Math.pow(a*c, p) + Math.pow(b*c, p))/3, 1/p);
         shapeName = 'Ellipsoid';
@@ -373,22 +612,19 @@ const VolumeAndSurfaceArea = () => {
     });
   };
 
-  React.useEffect(() => {
-    updateFormulaPreview();
-  }, [dimensions, shape]);
-
   const renderInputs = () => {
     switch(shape) {
       case 'cube':
         return (
           <div className="input-group">
-            <label>Side Length:</label>
+            <label style={{color: 'white'}}>Side Length:</label>
             <input
               type="number"
               value={dimensions.side}
               onChange={(e) => setDimensions({...dimensions, side: e.target.value})}
               placeholder="e.g., 5"
               min="0"
+              style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
             />
           </div>
         );
@@ -396,33 +632,36 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>Length:</label>
+              <label style={{color: 'white'}}>Length:</label>
               <input
                 type="number"
                 value={dimensions.length}
                 onChange={(e) => setDimensions({...dimensions, length: e.target.value})}
                 placeholder="e.g., 4"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Width:</label>
+              <label style={{color: 'white'}}>Width:</label>
               <input
                 type="number"
                 value={dimensions.width}
                 onChange={(e) => setDimensions({...dimensions, width: e.target.value})}
                 placeholder="e.g., 3"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Height:</label>
+              <label style={{color: 'white'}}>Height:</label>
               <input
                 type="number"
                 value={dimensions.height}
                 onChange={(e) => setDimensions({...dimensions, height: e.target.value})}
                 placeholder="e.g., 2"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -430,13 +669,14 @@ const VolumeAndSurfaceArea = () => {
       case 'sphere':
         return (
           <div className="input-group">
-            <label>Radius:</label>
+            <label style={{color: 'white'}}>Radius:</label>
             <input
               type="number"
               value={dimensions.radius}
               onChange={(e) => setDimensions({...dimensions, radius: e.target.value})}
               placeholder="e.g., 7"
               min="0"
+              style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
             />
           </div>
         );
@@ -444,23 +684,25 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>Radius:</label>
+              <label style={{color: 'white'}}>Radius:</label>
               <input
                 type="number"
                 value={dimensions.radius}
                 onChange={(e) => setDimensions({...dimensions, radius: e.target.value})}
                 placeholder="e.g., 3"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Height:</label>
+              <label style={{color: 'white'}}>Height:</label>
               <input
                 type="number"
                 value={dimensions.height}
                 onChange={(e) => setDimensions({...dimensions, height: e.target.value})}
                 placeholder="e.g., 8"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -469,23 +711,25 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>Radius:</label>
+              <label style={{color: 'white'}}>Radius:</label>
               <input
                 type="number"
                 value={dimensions.radius}
                 onChange={(e) => setDimensions({...dimensions, radius: e.target.value})}
                 placeholder="e.g., 5"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Height:</label>
+              <label style={{color: 'white'}}>Height:</label>
               <input
                 type="number"
                 value={dimensions.height}
                 onChange={(e) => setDimensions({...dimensions, height: e.target.value})}
                 placeholder="e.g., 12"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -494,33 +738,36 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>Base Length:</label>
+              <label style={{color: 'white'}}>Base Length:</label>
               <input
                 type="number"
                 value={dimensions.baseLength}
                 onChange={(e) => setDimensions({...dimensions, baseLength: e.target.value})}
                 placeholder="e.g., 6"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Base Width:</label>
+              <label style={{color: 'white'}}>Base Width:</label>
               <input
                 type="number"
                 value={dimensions.baseWidth}
                 onChange={(e) => setDimensions({...dimensions, baseWidth: e.target.value})}
                 placeholder="e.g., 4"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Height:</label>
+              <label style={{color: 'white'}}>Height:</label>
               <input
                 type="number"
                 value={dimensions.pyramidHeight}
                 onChange={(e) => setDimensions({...dimensions, pyramidHeight: e.target.value})}
                 placeholder="e.g., 9"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -529,33 +776,36 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>Base:</label>
+              <label style={{color: 'white'}}>Base:</label>
               <input
                 type="number"
                 value={dimensions.prismBase}
                 onChange={(e) => setDimensions({...dimensions, prismBase: e.target.value})}
                 placeholder="e.g., 3"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Height:</label>
+              <label style={{color: 'white'}}>Height:</label>
               <input
                 type="number"
                 value={dimensions.prismHeight}
                 onChange={(e) => setDimensions({...dimensions, prismHeight: e.target.value})}
                 placeholder="e.g., 4"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Length:</label>
+              <label style={{color: 'white'}}>Length:</label>
               <input
                 type="number"
                 value={dimensions.prismLength}
                 onChange={(e) => setDimensions({...dimensions, prismLength: e.target.value})}
                 placeholder="e.g., 10"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -564,23 +814,25 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>Major Radius (R):</label>
+              <label style={{color: 'white'}}>Major Radius (R):</label>
               <input
                 type="number"
                 value={dimensions.majorRadius}
                 onChange={(e) => setDimensions({...dimensions, majorRadius: e.target.value})}
                 placeholder="e.g., 10"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>Minor Radius (r):</label>
+              <label style={{color: 'white'}}>Minor Radius (r):</label>
               <input
                 type="number"
                 value={dimensions.minorRadius}
                 onChange={(e) => setDimensions({...dimensions, minorRadius: e.target.value})}
                 placeholder="e.g., 3"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -588,13 +840,14 @@ const VolumeAndSurfaceArea = () => {
       case 'hemisphere':
         return (
           <div className="input-group">
-            <label>Radius:</label>
+            <label style={{color: 'white'}}>Radius:</label>
             <input
               type="number"
               value={dimensions.hemisphereRadius}
               onChange={(e) => setDimensions({...dimensions, hemisphereRadius: e.target.value})}
               placeholder="e.g., 5"
               min="0"
+              style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
             />
           </div>
         );
@@ -602,33 +855,36 @@ const VolumeAndSurfaceArea = () => {
         return (
           <>
             <div className="input-group">
-              <label>A-axis:</label>
+              <label style={{color: 'white'}}>A-axis:</label>
               <input
                 type="number"
                 value={dimensions.aAxis}
                 onChange={(e) => setDimensions({...dimensions, aAxis: e.target.value})}
                 placeholder="e.g., 8"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>B-axis:</label>
+              <label style={{color: 'white'}}>B-axis:</label>
               <input
                 type="number"
                 value={dimensions.bAxis}
                 onChange={(e) => setDimensions({...dimensions, bAxis: e.target.value})}
                 placeholder="e.g., 5"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
             <div className="input-group">
-              <label>C-axis:</label>
+              <label style={{color: 'white'}}>C-axis:</label>
               <input
                 type="number"
                 value={dimensions.cAxis}
                 onChange={(e) => setDimensions({...dimensions, cAxis: e.target.value})}
                 placeholder="e.g., 3"
                 min="0"
+                style={{color: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
               />
             </div>
           </>
@@ -645,58 +901,85 @@ const VolumeAndSurfaceArea = () => {
       examples={examples}
     >
       {(addToHistory) => (
-        <>
-          <div className="input-group">
-            <label>Select Shape:</label>
-            <select 
-              value={shape} 
-              onChange={(e) => setShape(e.target.value)}
-              className="shape-selector"
+        <div className="calculator-container">
+          <div className="controls-section">
+            <div className="input-group">
+              <label style={{color: 'white'}}>Select Shape:</label>
+              <select 
+                value={shape} 
+                onChange={(e) => setShape(e.target.value)}
+                className="shape-selector"
+                style={{color: 'black', backgroundColor: 'rgba(255, 255, 255, 0.1)'}}
+              >
+                <option value="cube">Cube</option>
+                <option value="cuboid">Cuboid</option>
+                <option value="sphere">Sphere</option>
+                <option value="cylinder">Cylinder</option>
+                <option value="cone">Cone</option>
+                <option value="pyramid">Rectangular Pyramid</option>
+                <option value="prism">Triangular Prism</option>
+                <option value="torus">Torus (Doughnut)</option>
+                <option value="hemisphere">Hemisphere</option>
+                <option value="ellipsoid">Ellipsoid</option>
+              </select>
+            </div>
+
+            {renderInputs()}
+
+            {formulaPreview && (
+              <div className="formula-preview" style={{color: 'white'}}>
+                <h4 style={{color: 'white'}}>Formula Preview</h4>
+                <p>{formulaPreview}</p>
+              </div>
+            )}
+
+            <button 
+              onClick={() => calculate(addToHistory)} 
+              className="calculate-btn"
+              style={{backgroundColor: '#4CAF50', color: 'white'}}
             >
-              <option value="cube">Cube</option>
-              <option value="cuboid">Cuboid</option>
-              <option value="sphere">Sphere</option>
-              <option value="cylinder">Cylinder</option>
-              <option value="cone">Cone</option>
-              <option value="pyramid">Rectangular Pyramid</option>
-              <option value="prism">Triangular Prism</option>
-              <option value="torus">Torus (Doughnut)</option>
-              <option value="hemisphere">Hemisphere</option>
-              <option value="ellipsoid">Ellipsoid</option>
-            </select>
+              Calculate {shape.charAt(0).toUpperCase() + shape.slice(1)} Properties
+            </button>
+
+            {result && (
+              <div className="result" style={{color: 'black'}}>
+                <h3 style={{color: 'black'}}>Results:</h3>
+                <p>Shape: <strong>{result.shape}</strong></p>
+                <p>Volume: <strong>{result.volume} cubic units</strong></p>
+                <p>Surface Area: <strong>{result.surfaceArea} square units</strong></p>
+                
+                {result.steps && (
+                  <div className="step-by-step">
+                    <h4 style={{color: 'black'}}>Calculation Steps:</h4>
+                    {result.steps.map((step, index) => (
+                      <p key={index} className="step" style={{color: 'black'}}>{step}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {renderInputs()}
-
-          {formulaPreview && (
-            <div className="formula-preview">
-              <h4>Formula Preview</h4>
-              <p>{formulaPreview}</p>
+          <div className="visualization-section">
+            <h3 style={{color: 'white'}}>3D Visualization</h3>
+            <div className="canvas-container">
+              <canvas 
+                ref={canvasRef} 
+                style={{
+                  width: '100%',
+                  height: '400px',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '4px'
+                }}
+              />
             </div>
-          )}
-
-          <button onClick={() => calculate(addToHistory)} className="calculate-btn">
-            Calculate {shape.charAt(0).toUpperCase() + shape.slice(1)} Properties
-          </button>
-
-          {result && (
-            <div className="result">
-              <h3>Results:</h3>
-              <p>Shape: <strong>{result.shape}</strong></p>
-              <p>Volume: <strong>{result.volume} cubic units</strong></p>
-              <p>Surface Area: <strong>{result.surfaceArea} square units</strong></p>
-              
-              {result.steps && (
-                <div className="step-by-step">
-                  <h4>Calculation Steps:</h4>
-                  {result.steps.map((step, index) => (
-                    <p key={index} className="step">{step}</p>
-                  ))}
-                </div>
-              )}
+            <div className="visualization-controls" style={{color: 'white'}}>
+              <p>Rotate: Click and drag</p>
+              <p>Zoom: Scroll wheel</p>
+              <p>Pan: Right-click and drag</p>
             </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
     </CalculatorBase>
   );

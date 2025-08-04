@@ -4,6 +4,7 @@
   flex-direction: column;
   align-items: center;
   margin: 2rem auto;
+  
 }
 
 .jellyfish {
@@ -11,7 +12,7 @@
   height: 140px;
   background: radial-gradient(circle at center, #1295a3, #f6f6f6);
   border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
-  box-shadow: 0 0 30px rgb(219, 224, 224);
+  box-shadow: 0 0 30px rgba(4, 217, 255, 0.834);
   position: relative;
   animation: pulse 2s infinite;
 }
@@ -19,8 +20,8 @@
 .head-wave {
   position: absolute;
   width: 100%;
-  height: 30px;
-  background: rgba(98, 236, 236, 0.3);
+  height: 10px;
+  background: rgba(246, 3, 3, 0);
   border-radius: 50%;
   top: 90px;
   filter: blur(5px);

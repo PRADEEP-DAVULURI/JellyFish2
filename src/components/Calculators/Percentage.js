@@ -1,6 +1,6 @@
-// src/components/Calculators/Percentage.js
-import React, { useState, useEffect } from 'react'; // ✅ Import useState and useEffect
+import React, { useState, useEffect } from 'react';
 import CalculatorBase from './CalculatorBase';
+import '../../styles/calculator.css';
 
 const Percentage = () => {
   const [inputs, setInputs] = useState({
@@ -12,7 +12,8 @@ const Percentage = () => {
   });
   const [calcType, setCalcType] = useState('findPercentage');
   const [formulaPreview, setFormulaPreview] = useState('');
-  const [result, setResult] = useState(null); // ✅ Fix: Declare result state
+  const [result, setResult] = useState(null);
+  const [animationPhase, setAnimationPhase] = useState(0);
 
   const examples = [
     {
@@ -87,9 +88,19 @@ const Percentage = () => {
     }
   };
 
+  useEffect(() => {
+    if (result) {
+      const timer = setTimeout(() => {
+        setAnimationPhase(prev => (prev + 1) % 4);
+      }, 3000); // Slowed down from 1500ms to 3000ms
+      return () => clearTimeout(timer);
+    }
+  }, [animationPhase, result]);
+
   const calculate = (addToHistory) => {
     let resultObj = {};
     let steps = [];
+    let vizData = {};
 
     if (calcType === 'findPercentage') {
       const value = parseFloat(inputs.value);
@@ -114,11 +125,19 @@ const Percentage = () => {
         `${(resultValue / value).toFixed(4)} × 100 = ${percentage.toFixed(2)}%`
       ];
 
+      vizData = {
+        type: 'pie',
+        whole: value,
+        part: resultValue,
+        percentage: percentage
+      };
+
       resultObj = {
         type: 'Percentage',
         calculation: `(${resultValue} / ${value}) × 100`,
         result: percentage.toFixed(2) + '%',
-        steps
+        steps,
+        vizData
       };
     } else if (calcType === 'findValue') {
       const percentage = parseFloat(inputs.percentage);
@@ -143,11 +162,19 @@ const Percentage = () => {
         `${(percentage / 100).toFixed(4)} × ${value} = ${resultValue.toFixed(2)}`
       ];
 
+      vizData = {
+        type: 'bar',
+        whole: value,
+        percentage: percentage,
+        result: resultValue
+      };
+
       resultObj = {
         type: 'Value',
         calculation: `${percentage}% × ${value}`,
         result: resultValue.toFixed(2),
-        steps
+        steps,
+        vizData
       };
     } else if (calcType === 'increaseDecrease') {
       const originalValue = parseFloat(inputs.originalValue);
@@ -175,16 +202,26 @@ const Percentage = () => {
         `${(difference / originalValue).toFixed(4)} × 100 = ${percentage.toFixed(2)}%`
       ];
 
+      vizData = {
+        type: 'change',
+        original: originalValue,
+        final: finalValue,
+        difference: difference,
+        percentage: percentage
+      };
+
       resultObj = {
         type: difference >= 0 ? 'Increase' : 'Decrease',
         calculation: `((${finalValue} - ${originalValue}) / ${originalValue}) × 100`,
         result: Math.abs(percentage).toFixed(2) + '%',
         difference: difference.toFixed(2),
-        steps
+        steps,
+        vizData
       };
     }
 
     setResult(resultObj);
+    setAnimationPhase(0);
 
     addToHistory({
       description: `${resultObj.type} calculation: ${resultObj.calculation}`,
@@ -194,7 +231,147 @@ const Percentage = () => {
 
   useEffect(() => {
     updateFormulaPreview();
-  }, [inputs, calcType]);
+  }, [inputs, calcType, updateFormulaPreview]);
+
+  const renderVisualization = () => {
+    if (!result || !result.vizData) return null;
+
+    return (
+      <div className="percentage-visualization" data-phase={animationPhase}>
+        {result.vizData.type === 'pie' && (
+          <div className="pie-chart">
+            <div className="pie-container">
+              <div 
+                className="pie-slice whole"
+                style={{
+                  '--percentage': 100,
+                  '--hue': 200,
+                  '--rotation-speed': '5s'
+                }}
+              >
+                <div className="pie-label">Whole: {result.vizData.whole}</div>
+              </div>
+              <div 
+                className="pie-slice part"
+                style={{
+                  '--percentage': result.vizData.percentage,
+                  '--hue': 120,
+                  '--rotation-speed': '5s'
+                }}
+              >
+                <div className="pie-label">Part: {result.vizData.part}</div>
+                {animationPhase >= 1 && (
+                  <div className="percentage-value">
+                    {result.vizData.percentage.toFixed(2)}%
+                  </div>
+                )}
+              </div>
+              {animationPhase >= 2 && (
+                <div className="pie-legend">
+                  <div className="legend-item">
+                    <div className="color-box whole"></div>
+                    <span>Whole Value</span>
+                  </div>
+                  <div className="legend-item">
+                    <div className="color-box part"></div>
+                    <span>Part Value</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {result.vizData.type === 'bar' && (
+          <div className="bar-chart">
+            <div className="bars-container">
+              <div className="bar-group">
+                <div className="bar-label">100%</div>
+                <div 
+                  className="bar whole"
+                  style={{ height: '100%' }}
+                >
+                  <div className="bar-value">{result.vizData.whole}</div>
+                </div>
+              </div>
+              <div className="bar-group">
+                <div className="bar-label">{result.vizData.percentage}%</div>
+                <div 
+                  className="bar part"
+                  style={{ height: `${result.vizData.percentage}%` }}
+                >
+                  <div className="bar-value">{result.vizData.result.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+            {animationPhase >= 1 && (
+              <div className="bar-animation">
+                <div className="percentage-line" style={{ bottom: `${result.vizData.percentage}%` }}>
+                  <div className="percentage-label">{result.vizData.percentage}%</div>
+                </div>
+              </div>
+            )}
+            {animationPhase >= 2 && (
+              <div className="calculation-steps">
+                <div className="step">
+                  {result.vizData.percentage}% of {result.vizData.whole} = {result.vizData.result.toFixed(2)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {result.vizData.type === 'change' && (
+          <div className="change-chart">
+            <div className="change-container">
+              <div className="value original">
+                <div className="value-label">Original</div>
+                <div className="value-number">{result.vizData.original}</div>
+              </div>
+              <div className="change-arrow">
+                {result.vizData.difference >= 0 ? '↑' : '↓'}
+                <div className="change-percent">
+                  {Math.abs(result.vizData.percentage).toFixed(2)}%
+                </div>
+              </div>
+              <div className="value final">
+                <div className="value-label">Final</div>
+                <div className="value-number">{result.vizData.final}</div>
+              </div>
+            </div>
+            {animationPhase >= 1 && (
+              <div className="difference-bar">
+                <div 
+                  className="difference-fill"
+                  style={{ 
+                    width: `${Math.min(100, Math.abs(result.vizData.percentage))}%`,
+                    backgroundColor: result.vizData.difference >= 0 ? '#4CAF50' : '#F44336'
+                  }}
+                >
+                  <div className="difference-value">
+                    {result.vizData.difference >= 0 ? '+' : ''}{result.vizData.difference.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            )}
+            {animationPhase >= 2 && (
+              <div className="change-explanation">
+                {result.vizData.difference >= 0 ? (
+                  <div className="increase-message">
+                    Increased by {Math.abs(result.vizData.percentage).toFixed(2)}%
+                  </div>
+                ) : (
+                  <div className="decrease-message">
+                    Decreased by {Math.abs(result.vizData.percentage).toFixed(2)}%
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderInputs = () => {
     switch(calcType) {
@@ -304,6 +481,8 @@ const Percentage = () => {
             Calculate {calcType === 'findPercentage' ? 'Percentage' : 
                        calcType === 'findValue' ? 'Value' : 'Change'}
           </button>
+
+          {renderVisualization()}
 
           {result && (
             <div className="result">

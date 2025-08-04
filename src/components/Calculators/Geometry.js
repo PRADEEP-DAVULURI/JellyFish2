@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../styles/calculator.css';
 
 const Geometry = () => {
@@ -33,7 +33,115 @@ const Geometry = () => {
     angle: ''
   });
   const [result, setResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('properties'); // 'properties' or 'formulas'
+  const [activeTab, setActiveTab] = useState('properties');
+  const [visualization, setVisualization] = useState(null);
+
+  // Generate visualization when dimensions change
+  useEffect(() => {
+    generateVisualization();
+  }, [dimensions, shape]);
+
+  const generateVisualization = () => {
+    let viz = null;
+    
+    switch(shape) {
+      case 'circle':
+        const radius = parseFloat(dimensions.radius) || parseFloat(dimensions.diameter)/2 || 50;
+        viz = (
+          <div className="shape-visualization">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r={radius} fill="#4CAF50" fillOpacity="0.6" stroke="#2E7D32" strokeWidth="2" />
+              <line x1="100" y1="100" x2={100 + radius} y2="100" stroke="#FF5722" strokeWidth="2">
+                <animate attributeName="x2" values={`100;${100 + radius}`} dur="1s" repeatCount="1" />
+              </line>
+              <text x={100 + radius/2} y="90" textAnchor="middle" fill="#FF5722">r={radius.toFixed(1)}</text>
+            </svg>
+          </div>
+        );
+        break;
+
+      case 'square':
+        const side = parseFloat(dimensions.side) || 80;
+        viz = (
+          <div className="shape-visualization">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <rect x="50" y="50" width={side} height={side} fill="#2196F3" fillOpacity="0.6" stroke="#1565C0" strokeWidth="2" />
+              <line x1="50" y1="50" x2={50 + side} y2="50" stroke="#FF5722" strokeWidth="2">
+                <animate attributeName="x2" values={`50;${50 + side}`} dur="1s" repeatCount="1" />
+              </line>
+              <text x={50 + side/2} y="40" textAnchor="middle" fill="#FF5722">s={side.toFixed(1)}</text>
+            </svg>
+          </div>
+        );
+        break;
+
+      case 'rectangle':
+        const length = parseFloat(dimensions.length) || 100;
+        const width = parseFloat(dimensions.width) || 60;
+        viz = (
+          <div className="shape-visualization">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <rect x="50" y="50" width={length} height={width} fill="#9C27B0" fillOpacity="0.6" stroke="#6A1B9A" strokeWidth="2" />
+              <line x1="50" y1="50" x2={50 + length} y2="50" stroke="#FF5722" strokeWidth="2">
+                <animate attributeName="x2" values={`50;${50 + length}`} dur="1s" repeatCount="1" />
+              </line>
+              <text x={50 + length/2} y="40" textAnchor="middle" fill="#FF5722">l={length.toFixed(1)}</text>
+              <line x1={50 + length} y1="50" x2={50 + length} y2={50 + width} stroke="#FF9800" strokeWidth="2">
+                <animate attributeName="y2" values={`50;${50 + width}`} dur="1s" begin="1s" repeatCount="1" />
+              </line>
+              <text x={50 + length + 10} y={50 + width/2} fill="#FF9800">w={width.toFixed(1)}</text>
+            </svg>
+          </div>
+        );
+        break;
+
+      case 'triangle':
+        const base = parseFloat(dimensions.base) || 100;
+        const height = parseFloat(dimensions.height) || 80;
+        const side1 = parseFloat(dimensions.side1) || 80;
+        const side2 = parseFloat(dimensions.side2) || 80;
+        const side3 = parseFloat(dimensions.side3) || 100;
+        
+        if (dimensions.base && dimensions.height) {
+          // Right triangle visualization
+          viz = (
+            <div className="shape-visualization">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                <polygon points={`50,150 50,${150-height} ${50+base},150`} fill="#FF9800" fillOpacity="0.6" stroke="#F57C00" strokeWidth="2" />
+                <line x1="50" y1="150" x2="50" y2={150-height} stroke="#2196F3" strokeWidth="2">
+                  <animate attributeName="y2" values={`150;${150-height}`} dur="1s" repeatCount="1" />
+                </line>
+                <text x="30" y={150-height/2} fill="#2196F3">h={height.toFixed(1)}</text>
+                <line x1="50" y1="150" x2={50+base} y2="150" stroke="#4CAF50" strokeWidth="2">
+                  <animate attributeName="x2" values={`50;${50+base}`} dur="1s" begin="1s" repeatCount="1" />
+                </line>
+                <text x={50+base/2} y="170" fill="#4CAF50">b={base.toFixed(1)}</text>
+              </svg>
+            </div>
+          );
+        } else if (dimensions.side1 && dimensions.side2 && dimensions.side3) {
+          // Scalene triangle visualization
+          viz = (
+            <div className="shape-visualization">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                <polygon points={`50,150 ${50+side1},150 ${50+(side3*side3+side1*side1-side2*side2)/(2*side1)},${150-Math.sqrt(side3*side3-((side3*side3+side1*side1-side2*side2)/(2*side1))*((side3*side3+side1*side1-side2*side2)/(2*side1)))}`} 
+                        fill="#9C27B0" fillOpacity="0.6" stroke="#6A1B9A" strokeWidth="2" />
+                <text x="50" y="170" fill="#FF5722">a={side1.toFixed(1)}</text>
+                <text x={50+side1} y="170" fill="#FF5722">b={side2.toFixed(1)}</text>
+                <text x={50+side1/2} y="100" fill="#FF5722">c={side3.toFixed(1)}</text>
+              </svg>
+            </div>
+          );
+        }
+        break;
+
+      // Add visualizations for other shapes similarly
+      default:
+        viz = null;
+    }
+
+    setVisualization(viz);
+  };
 
   const calculateProperties = () => {
     let area = 0;
@@ -413,6 +521,24 @@ const Geometry = () => {
             <p><strong>Diameter:</strong> D = 2r</p>
           </div>
         );
+      case 'square':
+        return (
+          <div className="formula-card">
+            <h4>Square Formulas</h4>
+            <p><strong>Area:</strong> A = s²</p>
+            <p><strong>Perimeter:</strong> P = 4s</p>
+            <p><strong>Diagonal:</strong> d = s√2</p>
+          </div>
+        );
+      case 'rectangle':
+        return (
+          <div className="formula-card">
+            <h4>Rectangle Formulas</h4>
+            <p><strong>Area:</strong> A = l × w</p>
+            <p><strong>Perimeter:</strong> P = 2(l + w)</p>
+            <p><strong>Diagonal:</strong> d = √(l² + w²)</p>
+          </div>
+        );
       case 'triangle':
         return (
           <div className="formula-card">
@@ -422,7 +548,39 @@ const Geometry = () => {
             <p><strong>Perimeter:</strong> P = a + b + c</p>
           </div>
         );
-      // Add formulas for other shapes similarly
+      case 'trapezoid':
+        return (
+          <div className="formula-card">
+            <h4>Trapezoid Formulas</h4>
+            <p><strong>Area:</strong> A = ½(b₁ + b₂) × h</p>
+            <p><strong>Perimeter:</strong> P = a + b + c + d</p>
+          </div>
+        );
+      case 'parallelogram':
+        return (
+          <div className="formula-card">
+            <h4>Parallelogram Formulas</h4>
+            <p><strong>Area:</strong> A = b × h</p>
+            <p><strong>Perimeter:</strong> P = 2(a + b)</p>
+          </div>
+        );
+      case 'ellipse':
+        return (
+          <div className="formula-card">
+            <h4>Ellipse Formulas</h4>
+            <p><strong>Area:</strong> A = πab</p>
+            <p><strong>Circumference (approx):</strong> C ≈ π[3(a+b) - √((3a+b)(a+3b))]</p>
+          </div>
+        );
+      case 'sector':
+        return (
+          <div className="formula-card">
+            <h4>Sector Formulas</h4>
+            <p><strong>Area:</strong> A = (θ/360) × πr²</p>
+            <p><strong>Arc Length:</strong> L = (θ/360) × 2πr</p>
+            <p><strong>Perimeter:</strong> P = 2r + L</p>
+          </div>
+        );
       default:
         return <p>Select a shape to view its formulas</p>;
     }
@@ -446,18 +604,28 @@ const Geometry = () => {
         </select>
       </div>
 
-      <div className="input-section">
-        <h3>{shape.charAt(0).toUpperCase() + shape.slice(1)} Dimensions</h3>
-        {renderInputs()}
-      </div>
+      <div className="calculator-container">
+        <div className="input-section">
+          <h3>{shape.charAt(0).toUpperCase() + shape.slice(1)} Dimensions</h3>
+          {renderInputs()}
+          
+          <div className="button-group">
+            <button onClick={calculateProperties} className="calculate-btn">
+              Calculate
+            </button>
+            <button onClick={resetCalculator} className="reset-btn">
+              Reset
+            </button>
+          </div>
+        </div>
 
-      <div className="button-group">
-        <button onClick={calculateProperties} className="calculate-btn">
-          Calculate
-        </button>
-        <button onClick={resetCalculator} className="reset-btn">
-          Reset
-        </button>
+        <div className="visualization-section">
+          {visualization || (
+            <div className="placeholder-viz">
+              <p>Enter dimensions to see visualization</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="tabs">

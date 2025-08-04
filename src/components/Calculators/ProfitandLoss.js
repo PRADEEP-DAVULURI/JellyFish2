@@ -1,6 +1,6 @@
-// src/components/Calculators/ProfitandLoss.js
 import React, { useState, useEffect } from 'react';
 import CalculatorBase from './CalculatorBase';
+import '../../styles/calculator.css';
 
 const ProfitAndLoss = () => {
   const [inputs, setInputs] = useState({
@@ -13,7 +13,8 @@ const ProfitAndLoss = () => {
   });
   const [calcType, setCalcType] = useState('basic');
   const [formulaPreview, setFormulaPreview] = useState('');
-  const [result, setResult] = useState(null); // ✅ ADDED THIS LINE
+  const [result, setResult] = useState(null);
+  const [animationPhase, setAnimationPhase] = useState(0);
 
   const examples = [
     {
@@ -90,6 +91,7 @@ const ProfitAndLoss = () => {
   const calculate = (addToHistory) => {
     let resultObj = {};
     let steps = [];
+    let vizData = {};
 
     if (calcType === 'basic') {
       const cp = parseFloat(inputs.costPrice);
@@ -125,11 +127,20 @@ const ProfitAndLoss = () => {
         ];
       }
 
+      vizData = {
+        type: profit >= 0 ? 'profit' : 'loss',
+        costPrice: cp,
+        sellingPrice: sp,
+        amount: Math.abs(profit >= 0 ? profit : loss),
+        percentage: Math.abs(profit >= 0 ? profitPercent : lossPercent)
+      };
+
       resultObj = {
         type: profit >= 0 ? 'Profit' : 'Loss',
-        amount: Math.abs(profit >= 0 ? profit : loss).toFixed(2),
-        percentage: Math.abs(profit >= 0 ? profitPercent : lossPercent).toFixed(2) + '%',
-        steps
+        amount: vizData.amount.toFixed(2),
+        percentage: vizData.percentage.toFixed(2) + '%',
+        steps,
+        vizData
       };
     } else {
       let cp, sp;
@@ -158,11 +169,20 @@ const ProfitAndLoss = () => {
           `SP = CP + Profit = ${cp.toFixed(2)} + ${profit} = ${sp.toFixed(2)}`
         ];
 
+        vizData = {
+          type: 'reverse-profit',
+          costPrice: cp,
+          sellingPrice: sp,
+          profit,
+          profitPercent
+        };
+
         resultObj = {
           type: 'Reverse Profit',
           costPrice: cp.toFixed(2),
           sellingPrice: sp.toFixed(2),
-          steps
+          steps,
+          vizData
         };
       } else {
         const loss = parseFloat(inputs.loss);
@@ -188,16 +208,26 @@ const ProfitAndLoss = () => {
           `SP = CP - Loss = ${cp.toFixed(2)} - ${loss} = ${sp.toFixed(2)}`
         ];
 
+        vizData = {
+          type: 'reverse-loss',
+          costPrice: cp,
+          sellingPrice: sp,
+          loss,
+          lossPercent
+        };
+
         resultObj = {
           type: 'Reverse Loss',
           costPrice: cp.toFixed(2),
           sellingPrice: sp.toFixed(2),
-          steps
+          steps,
+          vizData
         };
       }
     }
 
     setResult(resultObj);
+    setAnimationPhase(1); // Start animations immediately
 
     addToHistory({
       description: `${resultObj.type} calculation`,
@@ -208,8 +238,139 @@ const ProfitAndLoss = () => {
   };
 
   useEffect(() => {
+    if (result && animationPhase > 0) {
+      const timer = setTimeout(() => {
+        setAnimationPhase(prev => (prev + 1) % 4);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [animationPhase, result]);
+
+  useEffect(() => {
     updateFormulaPreview();
-  }, [inputs, calcType]);
+  }, [inputs, calcType, updateFormulaPreview]);
+
+  const renderVisualization = () => {
+    if (!result || !result.vizData) return null;
+
+    return (
+      <div className="profit-loss-visualization" data-phase={animationPhase}>
+        {result.vizData.type === 'profit' && (
+          <div className="profit-chart">
+            <div className="price-bars">
+              <div className="price-bar cp-bar">
+                <div className="price-label">CP: ₹{result.vizData.costPrice}</div>
+                <div className="bar-fill" style={{ height: '100%' }}></div>
+              </div>
+              <div className="price-bar sp-bar">
+                <div className="price-label">SP: ₹{result.vizData.sellingPrice}</div>
+                <div className="bar-fill" style={{ height: '100%' }}></div>
+              </div>
+            </div>
+            <div className="profit-indicator">
+              <div className="arrow-up">↑</div>
+              <div className="profit-amount">
+                Profit: ₹{result.vizData.amount} ({result.vizData.percentage.toFixed(2)}%)
+              </div>
+            </div>
+            {animationPhase >= 2 && (
+              <div className="profit-explanation">
+                <p>You gained ₹{result.vizData.amount} ({result.vizData.percentage.toFixed(2)}%) on this transaction</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {result.vizData.type === 'loss' && (
+          <div className="loss-chart">
+            <div className="price-bars">
+              <div className="price-bar cp-bar">
+                <div className="price-label">CP: ₹{result.vizData.costPrice}</div>
+                <div className="bar-fill" style={{ height: '100%' }}></div>
+              </div>
+              <div className="price-bar sp-bar">
+                <div className="price-label">SP: ₹{result.vizData.sellingPrice}</div>
+                <div className="bar-fill" style={{ height: '100%' }}></div>
+              </div>
+            </div>
+            <div className="loss-indicator">
+              <div className="arrow-down">↓</div>
+              <div className="loss-amount">
+                Loss: ₹{result.vizData.amount} ({result.vizData.percentage.toFixed(2)}%)
+              </div>
+            </div>
+            {animationPhase >= 2 && (
+              <div className="loss-explanation">
+                <p>You lost ₹{result.vizData.amount} ({result.vizData.percentage.toFixed(2)}%) on this transaction</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {result.vizData.type === 'reverse-profit' && (
+          <div className="reverse-profit-chart">
+            <div className="calculation-flow">
+              <div className="flow-item">
+                <div className="flow-label">Profit</div>
+                <div className="flow-value">₹{result.vizData.profit}</div>
+              </div>
+              <div className="flow-arrow">→</div>
+              <div className="flow-item">
+                <div className="flow-label">Profit%</div>
+                <div className="flow-value">{result.vizData.profitPercent}%</div>
+              </div>
+              <div className="flow-arrow">→</div>
+              <div className="flow-item">
+                <div className="flow-label">CP</div>
+                <div className="flow-value">₹{result.vizData.costPrice.toFixed(2)}</div>
+              </div>
+              <div className="flow-arrow">→</div>
+              <div className="flow-item">
+                <div className="flow-label">SP</div>
+                <div className="flow-value">₹{result.vizData.sellingPrice.toFixed(2)}</div>
+              </div>
+            </div>
+            {animationPhase >= 2 && (
+              <div className="reverse-calculation">
+                <p>With {result.vizData.profitPercent}% profit, you need to sell at ₹{result.vizData.sellingPrice.toFixed(2)} when buying at ₹{result.vizData.costPrice.toFixed(2)}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {result.vizData.type === 'reverse-loss' && (
+          <div className="reverse-loss-chart">
+            <div className="calculation-flow">
+              <div className="flow-item">
+                <div className="flow-label">Loss</div>
+                <div className="flow-value">₹{result.vizData.loss}</div>
+              </div>
+              <div className="flow-arrow">→</div>
+              <div className="flow-item">
+                <div className="flow-label">Loss%</div>
+                <div className="flow-value">{result.vizData.lossPercent}%</div>
+              </div>
+              <div className="flow-arrow">→</div>
+              <div className="flow-item">
+                <div className="flow-label">CP</div>
+                <div className="flow-value">₹{result.vizData.costPrice.toFixed(2)}</div>
+              </div>
+              <div className="flow-arrow">→</div>
+              <div className="flow-item">
+                <div className="flow-label">SP</div>
+                <div className="flow-value">₹{result.vizData.sellingPrice.toFixed(2)}</div>
+              </div>
+            </div>
+            {animationPhase >= 2 && (
+              <div className="reverse-calculation">
+                <p>With {result.vizData.lossPercent}% loss, you need to sell at ₹{result.vizData.sellingPrice.toFixed(2)} when buying at ₹{result.vizData.costPrice.toFixed(2)}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderInputs = () => {
     if (calcType === 'basic') {
@@ -309,6 +470,8 @@ const ProfitAndLoss = () => {
           <button onClick={() => calculate(addToHistory)} className="calculate-btn">
             Calculate {calcType === 'basic' ? 'Profit/Loss' : 'Cost/Selling Price'}
           </button>
+
+          {renderVisualization()}
 
           {result && (
             <div className="result">

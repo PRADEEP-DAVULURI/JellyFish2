@@ -1,4 +1,3 @@
-// src/components/Calculators/BoatsAndStreams.js
 import React, { useState, useEffect } from 'react';
 import CalculatorBase from './CalculatorBase';
 import '../../styles/calculator.css';
@@ -15,16 +14,7 @@ const BoatsAndStreams = () => {
   const [result, setResult] = useState(null);
   const [calcType, setCalcType] = useState('speed');
   const [formulaPreview, setFormulaPreview] = useState('');
-  const [animation, setAnimation] = useState(false);
   const [visualization, setVisualization] = useState(null);
-
-  // Animation effect
-  useEffect(() => {
-    if (animation) {
-      const timer = setTimeout(() => setAnimation(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [animation]);
 
   const examples = [
     {
@@ -151,7 +141,10 @@ const BoatsAndStreams = () => {
         boatSpeed,
         streamSpeed,
         downstreamSpeed,
-        upstreamSpeed
+        upstreamSpeed,
+        downstreamDuration: Math.max(1, 10 / (downstreamSpeed / 100)),
+        upstreamDuration: Math.max(1, 10 / (upstreamSpeed / 100)),
+        streamDuration: Math.max(3, 8 / (streamSpeed / 50))
       };
     } else if (calcType === 'downstream') {
       const distance = parseFloat(values.distanceDownstream);
@@ -181,9 +174,8 @@ const BoatsAndStreams = () => {
 
       vizData = {
         type: 'downstream',
-        distance,
-        time,
-        speed
+        speed,
+        duration: Math.max(1, 10 / (speed / 100))
       };
     } else if (calcType === 'upstream') {
       const distance = parseFloat(values.distanceUpstream);
@@ -213,15 +205,13 @@ const BoatsAndStreams = () => {
 
       vizData = {
         type: 'upstream',
-        distance,
-        time,
-        speed
+        speed,
+        duration: Math.max(1, 10 / (speed / 100))
       };
     }
 
     setResult(resultObj);
     setVisualization(vizData);
-    setAnimation(true);
 
     addToHistory({
       description: `${calcType === 'speed' ? 'Boat and stream speeds' : 
@@ -233,7 +223,7 @@ const BoatsAndStreams = () => {
     });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     updateFormulaPreview();
   }, [values, calcType]);
 
@@ -317,43 +307,126 @@ const BoatsAndStreams = () => {
     if (!visualization) return null;
 
     return (
-      <div className="visualization">
-        <h3>Visualization:</h3>
-        <div className="river-animation">
-          <div className="river">
-            {calcType === 'speed' && (
+      <div className="professional-river-animation">
+        <div className="sky-gradient">
+          <div className="sun-rays"></div>
+          <div className="sun-disk"></div>
+          <div className="cloud-group" style={{ 
+            animationDuration: `${visualization.type === 'speed' ? 
+              visualization.streamDuration * 1.5 : 15}s`
+          }}>
+            <div className="cloud-layer"></div>
+          </div>
+        </div>
+        
+        <div className="river-container">
+          <div className="river-depth">
+            <div className="water-surface" style={{ 
+              animationDuration: `${visualization.type === 'speed' ? 
+                visualization.streamDuration : 6}s`
+            }}>
+              <div className="water-reflection"></div>
+            </div>
+            
+            {visualization.type === 'speed' ? (
               <>
-                <div className="boat downstream" 
-                  style={{ 
-                    animation: `moveBoat ${10/visualization.downstreamSpeed}s linear infinite`
-                  }}>
-                  Downstream: {visualization.downstreamSpeed} km/h
+                <div 
+                  className="speedboat downstream"
+                  style={{
+                    animationDuration: `${visualization.downstreamDuration}s`,
+                    '--speed': `${visualization.downstreamSpeed}km/h`
+                  }}
+                >
+                  <div className="hull"></div>
+                  <div className="cabin"></div>
+                  <div className="speed-effect"></div>
+                  <div className="speed-wave"></div>
                 </div>
-                <div className="boat upstream"
-                  style={{ 
-                    animation: `moveBoat ${10/visualization.upstreamSpeed}s linear infinite reverse`
-                  }}>
-                  Upstream: {visualization.upstreamSpeed} km/h
-                </div>
-                <div className="stream-flow" 
-                  style={{ 
-                    animation: `flowWater ${10/visualization.streamSpeed}s linear infinite`
-                  }}>
-                  Stream: {visualization.streamSpeed} km/h
+                <div 
+                  className="speedboat upstream"
+                  style={{
+                    animationDuration: `${visualization.upstreamDuration}s`,
+                    '--speed': `${visualization.upstreamSpeed}km/h`
+                  }}
+                >
+                  <div className="hull"></div>
+                  <div className="cabin"></div>
+                  <div className="speed-effect"></div>
+                  <div className="speed-wave"></div>
                 </div>
               </>
-            )}
-            {(calcType === 'downstream' || calcType === 'upstream') && (
-              <div className="boat"
-                style={{ 
-                  animation: `moveBoat ${10/visualization.speed}s linear infinite`,
-                  animationDirection: calcType === 'upstream' ? 'reverse' : 'normal'
-                }}>
-                {calcType === 'downstream' ? 'Downstream' : 'Upstream'}: {visualization.speed} km/h
+            ) : (
+              <div 
+                className={`speedboat ${visualization.type}`}
+                style={{
+                  animationDuration: `${visualization.duration}s`,
+                  '--speed': `${visualization.speed}km/h`
+                }}
+              >
+                <div className="hull"></div>
+                <div className="cabin"></div>
+                <div className="speed-effect"></div>
+                <div className="speed-wave"></div>
               </div>
             )}
           </div>
-          <div className="river-bank"></div>
+          
+          <div className="river-bank left">
+            <div className="vegetation"></div>
+          </div>
+          <div className="river-bank right">
+            <div className="vegetation"></div>
+          </div>
+        </div>
+        
+        <div className="digital-display">
+          {visualization.type === 'speed' ? (
+            <>
+              <div className="gauge downstream">
+                <div className="gauge-fill" style={{ 
+                  '--speed': visualization.downstreamSpeed / 500
+                }}></div>
+                <div className="gauge-label">
+                  <span className="indicator">↓</span>
+                  <span className="value">{visualization.downstreamSpeed}</span>
+                  <span className="unit">km/h</span>
+                </div>
+              </div>
+              <div className="gauge upstream">
+                <div className="gauge-fill" style={{ 
+                  '--speed': visualization.upstreamSpeed / 500
+                }}></div>
+                <div className="gauge-label">
+                  <span className="indicator">↑</span>
+                  <span className="value">{visualization.upstreamSpeed}</span>
+                  <span className="unit">km/h</span>
+                </div>
+              </div>
+              <div className="gauge stream">
+                <div className="gauge-fill" style={{ 
+                  '--speed': visualization.streamSpeed / 500
+                }}></div>
+                <div className="gauge-label">
+                  <span className="indicator">→</span>
+                  <span className="value">{visualization.streamSpeed}</span>
+                  <span className="unit">km/h</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className={`gauge ${visualization.type}`}>
+              <div className="gauge-fill" style={{ 
+                '--speed': visualization.speed / 500
+              }}></div>
+              <div className="gauge-label">
+                <span className="indicator">
+                  {visualization.type === 'downstream' ? '↓' : '↑'}
+                </span>
+                <span className="value">{visualization.speed}</span>
+                <span className="unit">km/h</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import '../../styles/calculator.css';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const TimeSpeedDistance = () => {
   const [inputs, setInputs] = useState({
@@ -12,6 +33,10 @@ const TimeSpeedDistance = () => {
   const [activeTab, setActiveTab] = useState('distance');
   const [history, setHistory] = useState([]);
   const [animation, setAnimation] = useState(false);
+  const [chartData, setChartData] = useState(null);
+  const [vehicleType, setVehicleType] = useState('car');
+  const [showVisualization, setShowVisualization] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Animation effect
   useEffect(() => {
@@ -20,6 +45,15 @@ const TimeSpeedDistance = () => {
       return () => clearTimeout(timer);
     }
   }, [animation]);
+
+  const vehicleIcons = {
+    car: '🚗',
+    bike: '🏍️',
+    truck: '🚚',
+    plane: '✈️',
+    train: '🚆',
+    ship: '🚢'
+  };
 
   const formulas = {
     distance: {
@@ -34,6 +68,33 @@ const TimeSpeedDistance = () => {
       expression: 'Time = Distance ÷ Speed',
       example: '120 km at 60 km/h → 120 ÷ 60 = 2 hours'
     }
+  };
+
+  const generateChartData = (distance, speed, time) => {
+    const hours = parseFloat(time) || parseFloat(distance) / parseFloat(speed);
+    const interval = hours / 10;
+    const labels = [];
+    const distanceData = [];
+    
+    for (let i = 0; i <= 10; i++) {
+      const currentHour = (i * interval).toFixed(2);
+      labels.push(`${currentHour} hrs`);
+      distanceData.push(parseFloat(speed) * parseFloat(currentHour));
+    }
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Distance Traveled (km)',
+          data: distanceData,
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          tension: 0.1,
+          fill: true
+        }
+      ]
+    };
   };
 
   const calculate = () => {
@@ -58,6 +119,8 @@ const TimeSpeedDistance = () => {
         steps.push('Using: Distance = Speed × Time');
         steps.push(`${speed} km/h × ${time} hours`);
         steps.push(`= ${value.toFixed(2)} km`);
+
+        setChartData(generateChartData(value, speed, time));
       } 
       else if (distance && !speed && time) {
         value = parseFloat(distance) / parseFloat(time);
@@ -90,12 +153,14 @@ const TimeSpeedDistance = () => {
       setMissingValue(missing);
       setActiveTab(missing);
       setAnimation(true);
+      setShowVisualization(missing === 'distance');
+      setProgress(0);
 
-      // Add to history
       setHistory(prev => [{
         inputs: {...inputs},
         result: `${missing}: ${value.toFixed(2)} ${unit}`,
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: new Date().toLocaleTimeString(),
+        vehicle: vehicleType
       }, ...prev.slice(0, 3)]);
 
     } catch (error) {
@@ -103,6 +168,26 @@ const TimeSpeedDistance = () => {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if (showVisualization && result) {
+      const animationDuration = parseFloat(result.value) / parseFloat(inputs.speed || (inputs.distance / inputs.time)) * 1000;
+      const startTime = Date.now();
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const newProgress = Math.min(100, (elapsed / animationDuration) * 100);
+        setProgress(newProgress);
+        
+        if (newProgress < 100) {
+          requestAnimationFrame(animate);
+        }
+      };
+      
+      const animationId = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationId);
+    }
+  }, [showVisualization, result, inputs]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -113,6 +198,9 @@ const TimeSpeedDistance = () => {
     setInputs({ distance: '', speed: '', time: '' });
     setResult(null);
     setMissingValue(null);
+    setChartData(null);
+    setShowVisualization(false);
+    setProgress(0);
   };
 
   const loadExample = (type) => {
@@ -124,6 +212,37 @@ const TimeSpeedDistance = () => {
     setInputs(examples[type]);
     setMissingValue(type);
     setActiveTab(type);
+    setShowVisualization(type === 'distance');
+  };
+
+  const renderVehicleAnimation = () => {
+    if (!showVisualization || !result) return null;
+
+    const distance = parseFloat(result.value);
+    const speed = parseFloat(inputs.speed || (inputs.distance / inputs.time));
+
+    return (
+      <div className="vehicle-animation-container">
+        <div className="road">
+          <div className="distance-markers">
+            {[0, 0.25, 0.5, 0.75, 1].map((portion, i) => (
+              <div key={i} className="marker" style={{ left: `${portion * 100}%` }}>
+                <span>{(distance * portion).toFixed(1)} km</span>
+              </div>
+            ))}
+          </div>
+          <div 
+            className="vehicle"
+            style={{ 
+              left: `${progress}%`,
+            }}
+          >
+            <span className="vehicle-icon">{vehicleIcons[vehicleType]}</span>
+            <span className="speed-badge">{speed} km/h</span>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -151,6 +270,17 @@ const TimeSpeedDistance = () => {
       </div>
 
       <div className="input-section">
+        <div className="vehicle-selector">
+          <label>Vehicle Type:</label>
+          <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}>
+            {Object.keys(vehicleIcons).map(type => (
+              <option key={type} value={type}>
+                {vehicleIcons[type]} {type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="input-group">
           <label>Distance (km):</label>
           <input
@@ -219,6 +349,43 @@ const TimeSpeedDistance = () => {
               ))}
             </ol>
           </div>
+
+          {showVisualization && (
+            <div className="visualization-section">
+              <h4>Journey Visualization:</h4>
+              {renderVehicleAnimation()}
+              
+              <div className="chart-container">
+                <Line 
+                  data={chartData}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      title: {
+                        display: true,
+                        text: 'Distance Over Time',
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: 'Distance (km)'
+                        }
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: 'Time (hours)'
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -228,6 +395,7 @@ const TimeSpeedDistance = () => {
           <ul>
             {history.map((item, i) => (
               <li key={i}>
+                <span className="vehicle-icon">{vehicleIcons[item.vehicle]}</span>
                 <span className="history-result">{item.result}</span>
                 <span className="history-time">{item.timestamp}</span>
               </li>

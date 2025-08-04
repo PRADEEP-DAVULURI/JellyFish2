@@ -32,6 +32,9 @@ import SurdsAndIndices from './components/Calculators/SurdsAndIndices';
 import Logarithms from './components/Calculators/Logarithms';
 import Simplification from './components/Calculators/Simplification';
 import AlgebraQuadraticEquations from './components/Calculators/AlgebraQuadraticEquations';
+import FinancialCalculator from './components/Calculators/FinancialCalculator';
+
+
 import 'splitting/dist/splitting.css';
 import 'splitting/dist/splitting-cells.css';
 
@@ -70,8 +73,9 @@ function App() {
         <Route path="/data-interpretation" element={<DataInterpretation />} />
         <Route path="/surds-and-indices" element={<SurdsAndIndices />} />
         <Route path="/logarithms" element={<Logarithms />} />
-        <Route path="/algebra-(quadratic-equations)" element={<AlgebraQuadraticEquations />} />
         <Route path="/simplification" element={<Simplification />} />
+        <Route path="/algebra-quadratic-equations" element={<AlgebraQuadraticEquations />} />
+        <Route path="/financialcalculator" element={<FinancialCalculator />} />
       </Routes>
     </div>
   );

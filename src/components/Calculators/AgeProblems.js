@@ -11,55 +11,247 @@ const AgeProblems = () => {
   const [person2, setPerson2] = useState('');
   const [relationship, setRelationship] = useState('');
   const [relationshipResult, setRelationshipResult] = useState(null);
+  const [gender, setGender] = useState('male'); // To handle gender-specific relationships
 
-  // Comprehensive relationship mapping
+  // Enhanced relationship mapping with more comprehensive connections
   const relationships = {
     // Immediate family
-    mother: { male: 'father', female: 'mother', reverse: 'child' },
-    father: { male: 'father', female: 'mother', reverse: 'child' },
-    son: { male: 'son', female: 'daughter', reverse: 'parent' },
-    daughter: { male: 'son', female: 'daughter', reverse: 'parent' },
-    brother: { male: 'brother', female: 'sister', reverse: 'sibling' },
-    sister: { male: 'brother', female: 'sister', reverse: 'sibling' },
-    husband: { male: 'husband', female: 'wife', reverse: 'spouse' },
-    wife: { male: 'husband', female: 'wife', reverse: 'spouse' },
+    mother: { 
+      reverse: 'child',
+      male: 'son',
+      female: 'daughter',
+      relationships: {
+        spouse: 'father',
+        child: ['son', 'daughter'],
+        sibling: ['aunt', 'uncle']
+      }
+    },
+    father: { 
+      reverse: 'child',
+      male: 'son',
+      female: 'daughter',
+      relationships: {
+        spouse: 'mother',
+        child: ['son', 'daughter'],
+        sibling: ['aunt', 'uncle']
+      }
+    },
+    son: { 
+      reverse: 'parent',
+      male: 'father',
+      female: 'mother',
+      relationships: {
+        spouse: 'daughter-in-law',
+        child: 'grandson',
+        parent: ['father', 'mother'],
+        sibling: ['son', 'daughter']
+      }
+    },
+    daughter: { 
+      reverse: 'parent',
+      male: 'father',
+      female: 'mother',
+      relationships: {
+        spouse: 'son-in-law',
+        child: 'granddaughter',
+        parent: ['father', 'mother'],
+        sibling: ['son', 'daughter']
+      }
+    },
+    brother: { 
+      reverse: 'sibling',
+      male: 'brother',
+      female: 'sister',
+      relationships: {
+        spouse: 'sister-in-law',
+        child: ['nephew', 'niece'],
+        parent: ['father', 'mother'],
+        sibling: ['brother', 'sister']
+      }
+    },
+    sister: { 
+      reverse: 'sibling',
+      male: 'brother',
+      female: 'sister',
+      relationships: {
+        spouse: 'brother-in-law',
+        child: ['nephew', 'niece'],
+        parent: ['father', 'mother'],
+        sibling: ['brother', 'sister']
+      }
+    },
+    husband: { 
+      reverse: 'wife',
+      relationships: {
+        child: ['son', 'daughter'],
+        parent: ['father-in-law', 'mother-in-law'],
+        sibling: ['brother-in-law', 'sister-in-law']
+      }
+    },
+    wife: { 
+      reverse: 'husband',
+      relationships: {
+        child: ['son', 'daughter'],
+        parent: ['father-in-law', 'mother-in-law'],
+        sibling: ['brother-in-law', 'sister-in-law']
+      }
+    },
     
     // Extended family
-    grandfather: { male: 'grandfather', female: 'grandmother', reverse: 'grandchild' },
-    grandmother: { male: 'grandfather', female: 'grandmother', reverse: 'grandchild' },
-    grandson: { male: 'grandson', female: 'granddaughter', reverse: 'grandparent' },
-    granddaughter: { male: 'grandson', female: 'granddaughter', reverse: 'grandparent' },
-    uncle: { male: 'uncle', female: 'aunt', reverse: 'nephew/niece' },
-    aunt: { male: 'uncle', female: 'aunt', reverse: 'nephew/niece' },
-    nephew: { male: 'nephew', female: 'niece', reverse: 'uncle/aunt' },
-    niece: { male: 'nephew', female: 'niece', reverse: 'uncle/aunt' },
-    cousin: { male: 'cousin', female: 'cousin', reverse: 'cousin' },
+    grandfather: { 
+      reverse: 'grandchild',
+      relationships: {
+        spouse: 'grandmother',
+        child: ['father', 'mother', 'uncle', 'aunt'],
+        sibling: ['great-uncle', 'great-aunt']
+      }
+    },
+    grandmother: { 
+      reverse: 'grandchild',
+      relationships: {
+        spouse: 'grandfather',
+        child: ['father', 'mother', 'uncle', 'aunt'],
+        sibling: ['great-uncle', 'great-aunt']
+      }
+    },
+    grandson: { 
+      reverse: 'grandparent',
+      relationships: {
+        spouse: 'granddaughter-in-law',
+        child: 'great-grandson',
+        parent: ['son', 'daughter']
+      }
+    },
+    granddaughter: { 
+      reverse: 'grandparent',
+      relationships: {
+        spouse: 'grandson-in-law',
+        child: 'great-granddaughter',
+        parent: ['son', 'daughter']
+      }
+    },
+    uncle: { 
+      reverse: 'nephew/niece',
+      relationships: {
+        spouse: 'aunt',
+        child: ['cousin'],
+        sibling: ['uncle', 'aunt', 'father', 'mother']
+      }
+    },
+    aunt: { 
+      reverse: 'nephew/niece',
+      relationships: {
+        spouse: 'uncle',
+        child: ['cousin'],
+        sibling: ['uncle', 'aunt', 'father', 'mother']
+      }
+    },
+    nephew: { 
+      reverse: 'uncle/aunt',
+      relationships: {
+        spouse: 'niece-in-law',
+        child: 'grandnephew',
+        parent: ['brother', 'sister']
+      }
+    },
+    niece: { 
+      reverse: 'uncle/aunt',
+      relationships: {
+        spouse: 'nephew-in-law',
+        child: 'grandniece',
+        parent: ['brother', 'sister']
+      }
+    },
+    cousin: { 
+      reverse: 'cousin',
+      relationships: {
+        spouse: 'cousin-in-law',
+        child: 'second cousin',
+        parent: ['uncle', 'aunt']
+      }
+    },
     
     // In-laws
-    fatherInLaw: { male: 'father-in-law', female: 'mother-in-law', reverse: 'son/daughter-in-law' },
-    motherInLaw: { male: 'father-in-law', female: 'mother-in-law', reverse: 'son/daughter-in-law' },
-    sonInLaw: { male: 'son-in-law', female: 'daughter-in-law', reverse: 'father/mother-in-law' },
-    daughterInLaw: { male: 'son-in-law', female: 'daughter-in-law', reverse: 'father/mother-in-law' },
-    brotherInLaw: { male: 'brother-in-law', female: 'sister-in-law', reverse: 'brother/sister-in-law' },
-    sisterInLaw: { male: 'brother-in-law', female: 'sister-in-law', reverse: 'brother/sister-in-law' },
+    fatherInLaw: { 
+      reverse: 'son/daughter-in-law',
+      relationships: {
+        spouse: 'mother-in-law',
+        child: ['brother-in-law', 'sister-in-law', 'spouse']
+      }
+    },
+    motherInLaw: { 
+      reverse: 'son/daughter-in-law',
+      relationships: {
+        spouse: 'father-in-law',
+        child: ['brother-in-law', 'sister-in-law', 'spouse']
+      }
+    },
+    sonInLaw: { 
+      reverse: 'father/mother-in-law',
+      relationships: {
+        spouse: 'daughter',
+        child: 'grandson',
+        parent: ['father-in-law', 'mother-in-law']
+      }
+    },
+    daughterInLaw: { 
+      reverse: 'father/mother-in-law',
+      relationships: {
+        spouse: 'son',
+        child: 'granddaughter',
+        parent: ['father-in-law', 'mother-in-law']
+      }
+    },
+    brotherInLaw: { 
+      reverse: 'brother/sister-in-law',
+      relationships: {
+        spouse: 'sister-in-law',
+        child: ['nephew', 'niece'],
+        sibling: ['brother-in-law', 'sister-in-law']
+      }
+    },
+    sisterInLaw: { 
+      reverse: 'brother/sister-in-law',
+      relationships: {
+        spouse: 'brother-in-law',
+        child: ['nephew', 'niece'],
+        sibling: ['brother-in-law', 'sister-in-law']
+      }
+    },
     
     // Step family
-    stepMother: { male: 'step-father', female: 'step-mother', reverse: 'step-child' },
-    stepFather: { male: 'step-father', female: 'step-mother', reverse: 'step-child' },
-    stepSon: { male: 'step-son', female: 'step-daughter', reverse: 'step-parent' },
-    stepDaughter: { male: 'step-son', female: 'step-daughter', reverse: 'step-parent' },
-    stepBrother: { male: 'step-brother', female: 'step-sister', reverse: 'step-sibling' },
-    stepSister: { male: 'step-brother', female: 'step-sister', reverse: 'step-sibling' },
-    
-    // Half relations
-    halfBrother: { male: 'half-brother', female: 'half-sister', reverse: 'half-sibling' },
-    halfSister: { male: 'half-brother', female: 'half-sister', reverse: 'half-sibling' },
-    
-    // God relations
-    godFather: { male: 'godfather', female: 'godmother', reverse: 'godchild' },
-    godMother: { male: 'godfather', female: 'godmother', reverse: 'godchild' },
-    godSon: { male: 'godson', female: 'goddaughter', reverse: 'godparent' },
-    godDaughter: { male: 'godson', female: 'goddaughter', reverse: 'godparent' }
+    stepMother: { 
+      reverse: 'step-child',
+      relationships: {
+        spouse: 'step-father',
+        child: ['step-son', 'step-daughter'],
+        sibling: ['step-aunt', 'step-uncle']
+      }
+    },
+    stepFather: { 
+      reverse: 'step-child',
+      relationships: {
+        spouse: 'step-mother',
+        child: ['step-son', 'step-daughter'],
+        sibling: ['step-aunt', 'step-uncle']
+      }
+    },
+    stepSon: { 
+      reverse: 'step-parent',
+      relationships: {
+        spouse: 'step-daughter-in-law',
+        child: 'step-grandson',
+        parent: ['step-father', 'step-mother']
+      }
+    },
+    stepDaughter: { 
+      reverse: 'step-parent',
+      relationships: {
+        spouse: 'step-son-in-law',
+        child: 'step-granddaughter',
+        parent: ['step-father', 'step-mother']
+      }
+    }
   };
 
   const examples = [
@@ -205,6 +397,7 @@ const AgeProblems = () => {
 
     let resultObj = {};
     let calculationSteps = [];
+    let relationshipDescription = '';
 
     if (person1 && person2) {
       // Find relationship between two people
@@ -212,52 +405,81 @@ const AgeProblems = () => {
       const rel2 = relationships[person2];
       
       if (rel1 && rel2) {
-        if (rel1.reverse === person2) {
-          resultObj.relationship = `${person1} is the ${person2}'s ${person1}`;
+        // Direct reverse relationship
+        if (rel1.reverse === person2 || (Array.isArray(rel1.reverse) && rel1.reverse.includes(person2))) {
+          relationshipDescription = `${person1} is the ${person2}'s ${person1}`;
           calculationSteps.push(
             `The reverse of ${person2} is ${rel2.reverse}`,
             `Therefore, ${person1} is the ${person2}'s ${person1}`
           );
-        } else if (rel2.reverse === person1) {
-          resultObj.relationship = `${person2} is the ${person1}'s ${person2}`;
+        } 
+        // Check if person2 is in person1's relationships
+        else if (rel1.relationships && Object.values(rel1.relationships).flat().includes(person2)) {
+          const relationType = Object.entries(rel1.relationships).find(([_, values]) => 
+            Array.isArray(values) ? values.includes(person2) : values === person2
+          )[0];
+          
+          relationshipDescription = `${person1}'s ${relationType} is ${person2}`;
           calculationSteps.push(
-            `The reverse of ${person1} is ${rel1.reverse}`,
-            `Therefore, ${person2} is the ${person1}'s ${person2}`
+            `In ${person1}'s relationships, ${person2} is listed as ${relationType}`,
+            `Therefore, ${person1}'s ${relationType} is ${person2}`
           );
-        } else {
-          // More complex relationship analysis
-          resultObj.relationship = `Analyzing relationship between ${person1} and ${person2}`;
+        }
+        // Check if person1 is in person2's relationships
+        else if (rel2.relationships && Object.values(rel2.relationships).flat().includes(person1)) {
+          const relationType = Object.entries(rel2.relationships).find(([_, values]) => 
+            Array.isArray(values) ? values.includes(person1) : values === person1
+          )[0];
+          
+          relationshipDescription = `${person2}'s ${relationType} is ${person1}`;
           calculationSteps.push(
-            `Checking common relationships...`,
+            `In ${person2}'s relationships, ${person1} is listed as ${relationType}`,
+            `Therefore, ${person2}'s ${relationType} is ${person1}`
+          );
+        }
+        // More complex relationship analysis
+        else {
+          relationshipDescription = `${person1} and ${person2} may be connected through extended family relationships`;
+          calculationSteps.push(
+            `Checking extended family connections...`,
             `This requires more complex family tree analysis`
           );
         }
       } else {
-        resultObj.error = `One or both relationship terms are not recognized`;
+        relationshipDescription = `One or both relationship terms are not recognized`;
       }
     } else if (person1 && relationship) {
       // Find who has this relationship to person1
       const rel = relationships[relationship];
       if (rel) {
-        resultObj.relationship = `The ${relationship} of ${person1} is ${rel.reverse}`;
+        const reverseRel = rel.reverse;
+        relationshipDescription = `The ${relationship} of ${person1} is ${reverseRel}`;
         calculationSteps.push(
-          `The reverse relationship of ${relationship} is ${rel.reverse}`,
-          `Therefore, the ${relationship} of ${person1} is ${rel.reverse}`
+          `The reverse relationship of ${relationship} is ${reverseRel}`,
+          `Therefore, the ${relationship} of ${person1} is ${reverseRel}`
         );
+        
+        // If the relationship has gender-specific versions
+        if (rel[gender]) {
+          relationshipDescription += ` (${rel[gender]} if ${gender})`;
+          calculationSteps.push(
+            `Gender-specific: ${rel[gender]} if ${gender}`
+          );
+        }
       } else {
-        resultObj.error = `Relationship term '${relationship}' not recognized`;
+        relationshipDescription = `Relationship term '${relationship}' not recognized`;
       }
     }
 
-    setRelationshipResult({
-      ...resultObj,
-      steps: calculationSteps
-    });
+    resultObj.relationship = relationshipDescription;
+    resultObj.steps = calculationSteps;
 
-    if (resultObj.relationship) {
+    setRelationshipResult(resultObj);
+
+    if (relationshipDescription && !relationshipDescription.includes('not recognized')) {
       addToHistory({
         description: `Relationship: ${person1} ${person2 ? `and ${person2}` : `'s ${relationship}`}`,
-        result: resultObj.relationship
+        result: relationshipDescription
       });
     }
   };
@@ -274,7 +496,7 @@ const AgeProblems = () => {
 
   useEffect(() => {
     updateFormulaPreview();
-  }, [currentAges, years, person1, person2, relationship, relationshipMode]);
+  }, [currentAges, years, person1, person2, relationship, relationshipMode, gender]);
 
   return (
     <CalculatorBase 
@@ -347,6 +569,17 @@ const AgeProblems = () => {
             </>
           ) : (
             <>
+              <div className="input-group">
+                <label>Gender (for gender-specific relationships):</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
               <div className="input-group">
                 <label>Person 1's Relationship:</label>
                 <select

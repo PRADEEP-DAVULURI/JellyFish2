@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CalculatorBase from './CalculatorBase';
 import '../../styles/calculator.css';
 
@@ -16,6 +16,7 @@ const ProbabilityCalculator = () => {
   });
   const [result, setResult] = useState(null);
   const [calculationSteps, setCalculationSteps] = useState([]);
+  const [visualization, setVisualization] = useState(null);
 
   const probabilityTypes = [
     { value: 'basic', label: 'Basic Probability' },
@@ -59,6 +60,129 @@ const ProbabilityCalculator = () => {
     }
   ];
 
+  // Generate visualization based on calculation type and inputs
+  useEffect(() => {
+    if (!result) {
+      setVisualization(null);
+      return;
+    }
+
+    let viz = null;
+    switch(calcType) {
+      case 'basic':
+        const total = parseInt(inputs.total) || 6;
+        const favorable = parseInt(inputs.favorable) || 3;
+        
+        // Dice visualization for basic probability
+        if (total <= 6 && total > 0) {
+          viz = (
+            <div className="dice-visualization">
+              <h4>Dice Visualization</h4>
+              <div className="dice-container">
+                {Array.from({length: total}).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`die ${i < favorable ? 'favorable' : ''}`}
+                  >
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
+              <p>Favorable outcomes: {favorable} (green)</p>
+              <p>Total outcomes: {total}</p>
+            </div>
+          );
+        } 
+        // Card visualization for larger numbers
+        else if (total <= 52) {
+          viz = (
+            <div className="card-visualization">
+              <h4>Card Deck Visualization</h4>
+              <div className="card-container">
+                {Array.from({length: Math.min(total, 52)}).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`card ${i < favorable ? 'favorable' : ''}`}
+                  >
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
+              <p>Favorable outcomes: {favorable} (green)</p>
+              <p>Total outcomes: {total}</p>
+            </div>
+          );
+        }
+        break;
+
+      case 'combined':
+        // Venn diagram for combined probabilities
+        const p1 = parseFloat(inputs.probability1) || 0.5;
+        const p2 = parseFloat(inputs.probability2) || 0.5;
+        const overlap = inputs.dependent === 'independent' ? p1 * p2 : p1 * (parseFloat(inputs.given) || 0.25);
+        
+        viz = (
+          <div className="venn-diagram">
+            <h4>Venn Diagram</h4>
+            <div className="venn-container">
+              <div className="circle a" style={{opacity: p1}}>
+                <span>P(A) = {p1.toFixed(2)}</span>
+              </div>
+              <div className="circle b" style={{opacity: p2}}>
+                <span>P(B) = {p2.toFixed(2)}</span>
+              </div>
+              <div className="intersection" style={{opacity: overlap * 2}}>
+                <span>P(A {inputs.andOr === 'and' ? 'AND' : 'OR'} B) = {result.result}</span>
+              </div>
+            </div>
+          </div>
+        );
+        break;
+
+      case 'binomial':
+        // Binomial distribution chart
+        const n = parseInt(inputs.total) || 10;
+        const k = parseInt(inputs.favorable) || 3;
+        const p = parseFloat(inputs.probability1) || 0.5;
+        
+        viz = (
+          <div className="binomial-chart">
+            <h4>Binomial Distribution</h4>
+            <div className="chart-container">
+              {Array.from({length: n + 1}).map((_, x) => {
+                const prob = binomialProbability(n, x, p);
+                return (
+                  <div 
+                    key={x} 
+                    className={`bar ${x === k ? 'highlight' : ''}`}
+                    style={{height: `${prob * 200}px`}}
+                    title={`P(${x}) = ${prob.toFixed(4)}`}
+                  >
+                    <span>{x}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p>Highlighted: P({k}) = {result.result}</p>
+          </div>
+        );
+        break;
+
+      default:
+        viz = null;
+    }
+
+    setVisualization(viz);
+  }, [result, calcType, inputs]);
+
+  const binomialProbability = (n, k, p) => {
+    return combination(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+  };
+
+  const combination = (n, k) => {
+    return factorial(n) / (factorial(k) * factorial(n - k));
+  };
+
   const calculateProbability = (addToHistory) => {
     const steps = [];
     let resultObj = { type: '' };
@@ -77,6 +201,9 @@ const ProbabilityCalculator = () => {
           }
           if (favorable > total) {
             throw new Error('Favorable outcomes cannot exceed total outcomes');
+          }
+          if (favorable < 0) {
+            throw new Error('Favorable outcomes cannot be negative');
           }
           
           steps.push(`Basic Probability Formula: P = favorable / total`);
@@ -200,8 +327,8 @@ const ProbabilityCalculator = () => {
           break;
 
         case 'binomial':
-          const n = parseFloat(inputs.favorable);
-          const k = parseFloat(inputs.total);
+          const n = parseFloat(inputs.total);
+          const k = parseFloat(inputs.favorable);
           const p = parseFloat(inputs.probability1);
           
           if (isNaN(n) || isNaN(k) || isNaN(p)) {
@@ -210,14 +337,17 @@ const ProbabilityCalculator = () => {
           if (k > n) {
             throw new Error('Successes cannot exceed trials');
           }
+          if (p < 0 || p > 1) {
+            throw new Error('Probability must be between 0 and 1');
+          }
           
           // Combination calculation
-          const combination = factorial(n) / (factorial(k) * factorial(n - k));
-          steps.push(`Combination: C(${n},${k}) = ${n}! / (${k}! × ${n-k}!) = ${combination}`);
+          const comb = combination(n, k);
+          steps.push(`Combination: C(${n},${k}) = ${n}! / (${k}! × ${n-k}!) = ${comb}`);
           
           // Probability calculation
-          const binomial = combination * Math.pow(p, k) * Math.pow(1 - p, n - k);
-          steps.push(`Binomial Probability: ${combination} × ${p}^${k} × ${(1-p)}^${n-k}`);
+          const binomial = comb * Math.pow(p, k) * Math.pow(1 - p, n - k);
+          steps.push(`Binomial Probability: ${comb} × ${p}^${k} × ${(1-p)}^${n-k}`);
           steps.push(`P = ${binomial.toFixed(6)}`);
           
           resultObj = {
@@ -263,7 +393,7 @@ const ProbabilityCalculator = () => {
             throw new Error('Cannot select more items than available');
           }
           
-          const combinationCalc = factorial(nComb) / (factorial(rComb) * factorial(nComb - rComb));
+          const combinationCalc = combination(nComb, rComb);
           steps.push(`Combination: C(${nComb},${rComb}) = ${nComb}! / (${rComb}! × (${nComb}-${rComb})!)`);
           steps.push(`C = ${combinationCalc}`);
           
@@ -518,39 +648,47 @@ const ProbabilityCalculator = () => {
           </button>
 
           {result && (
-            <div className="result">
-              <h3>Results</h3>
-              <div className="result-grid">
-                <div className="result-item">
-                  <span className="result-label">Type:</span>
-                  <span className="result-value">{result.type}</span>
-                </div>
-                <div className="result-item">
-                  <span className="result-label">Calculation:</span>
-                  <span className="result-value">{result.calculation}</span>
-                </div>
-                <div className="result-item">
-                  <span className="result-label">Result:</span>
-                  <span className="result-value">{result.result}</span>
-                </div>
-                {result.percentage && (
+            <div className="result-container">
+              <div className="result">
+                <h3>Results</h3>
+                <div className="result-grid">
                   <div className="result-item">
-                    <span className="result-label">Percentage:</span>
-                    <span className="result-value">{result.percentage}</span>
+                    <span className="result-label">Type:</span>
+                    <span className="result-value">{result.type}</span>
+                  </div>
+                  <div className="result-item">
+                    <span className="result-label">Calculation:</span>
+                    <span className="result-value">{result.calculation}</span>
+                  </div>
+                  <div className="result-item">
+                    <span className="result-label">Result:</span>
+                    <span className="result-value">{result.result}</span>
+                  </div>
+                  {result.percentage && (
+                    <div className="result-item">
+                      <span className="result-label">Percentage:</span>
+                      <span className="result-value">{result.percentage}</span>
+                    </div>
+                  )}
+                  <div className="result-item">
+                    <span className="result-label">Explanation:</span>
+                    <span className="result-value">{result.explanation}</span>
+                  </div>
+                </div>
+
+                {calculationSteps.length > 0 && (
+                  <div className="step-by-step">
+                    <h4>Calculation Steps:</h4>
+                    {calculationSteps.map((step, index) => (
+                      <div key={index} className="step">{step}</div>
+                    ))}
                   </div>
                 )}
-                <div className="result-item">
-                  <span className="result-label">Explanation:</span>
-                  <span className="result-value">{result.explanation}</span>
-                </div>
               </div>
 
-              {calculationSteps.length > 0 && (
-                <div className="step-by-step">
-                  <h4>Calculation Steps:</h4>
-                  {calculationSteps.map((step, index) => (
-                    <div key={index} className="step">{step}</div>
-                  ))}
+              {visualization && (
+                <div className="visualization">
+                  {visualization}
                 </div>
               )}
             </div>

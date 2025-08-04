@@ -34,6 +34,7 @@ const topics = [
   { name: "Surds and Indices", icon: "√", description: "Operations with roots and exponents" },
   { name: "Logarithms", icon: "log", description: "Logarithmic calculations" },
   { name: "Simplification", icon: "=", description: "Simplify complex expressions" }
+  ,{ name: "FinancialCalculator", icon: "=", description: "Financial Calculator" }
 ];
 
 const categories = [

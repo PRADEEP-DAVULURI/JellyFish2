@@ -1,6 +1,7 @@
 // src/components/Calculators/RatioAndProportion.js
-import React, { useState, useEffect } from 'react'; // ✅ Added useEffect
+import React, { useState, useEffect } from 'react';
 import CalculatorBase from './CalculatorBase';
+import { PieChart, BarChart, ScatterChart } from './VisualizationComponents';
 
 const RatioAndProportion = () => {
   const [inputs, setInputs] = useState({
@@ -13,7 +14,8 @@ const RatioAndProportion = () => {
 
   const [calcType, setCalcType] = useState('simplify');
   const [formulaPreview, setFormulaPreview] = useState('');
-  const [result, setResult] = useState(null); // ✅ Added missing result state
+  const [result, setResult] = useState(null);
+  const [visualizationData, setVisualizationData] = useState(null);
 
   const examples = [
     {
@@ -75,6 +77,7 @@ const RatioAndProportion = () => {
   const calculate = (addToHistory) => {
     let resultObj = {};
     let steps = [];
+    let visData = null;
 
     if (calcType === 'simplify') {
       const num1 = parseInt(inputs.ratio1);
@@ -87,18 +90,49 @@ const RatioAndProportion = () => {
 
       const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
       const divisor = gcd(num1, num2);
+      const simplified1 = num1 / divisor;
+      const simplified2 = num2 / divisor;
 
       steps = [
         `Step 1: Find GCD of ${num1} and ${num2}`,
         `GCD(${num1}, ${num2}) = ${divisor}`,
         `Step 2: Divide both terms by GCD`,
-        `${num1} ÷ ${divisor} = ${num1 / divisor}`,
-        `${num2} ÷ ${divisor} = ${num2 / divisor}`
+        `${num1} ÷ ${divisor} = ${simplified1}`,
+        `${num2} ÷ ${divisor} = ${simplified2}`
       ];
+
+      // Visualization data for simplified ratio
+      visData = {
+        type: 'bar',
+        data: {
+          labels: ['Original Ratio', 'Simplified Ratio'],
+          datasets: [
+            {
+              label: 'First Value',
+              data: [num1, simplified1],
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Second Value',
+              data: [num2, simplified2],
+              backgroundColor: 'rgba(153, 102, 255, 0.6)',
+              borderColor: 'rgba(153, 102, 255, 1)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      };
 
       resultObj = {
         type: 'Simplified Ratio',
-        result: `${num1 / divisor}:${num2 / divisor}`,
+        result: `${simplified1}:${simplified2}`,
         steps
       };
     } else if (calcType === 'share') {
@@ -122,6 +156,44 @@ const RatioAndProportion = () => {
         `Step 3: Calculate second share`,
         `(${total} × ${ratio2}) / ${ratio1 + ratio2} = ${share2.toFixed(2)}`
       ];
+
+      // Visualization data for ratio sharing
+      visData = {
+        type: 'pie',
+        data: {
+          labels: [`First Share (${ratio1}:${ratio2})`, `Second Share (${ratio2}:${ratio1})`],
+          datasets: [{
+            data: [share1, share2],
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.7)',
+              'rgba(54, 162, 235, 0.7)'
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value.toFixed(2)} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      };
 
       resultObj = {
         type: 'Ratio Sharing',
@@ -149,6 +221,55 @@ const RatioAndProportion = () => {
         `x = ${value2.toFixed(2)}`
       ];
 
+      // Visualization data for proportion
+      visData = {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Original Ratio',
+              data: [{x: ratio1, y: ratio2}],
+              backgroundColor: 'rgba(255, 99, 132, 1)',
+              pointRadius: 10
+            },
+            {
+              label: 'Proportional Values',
+              data: [{x: value1, y: value2}],
+              backgroundColor: 'rgba(54, 162, 235, 1)',
+              pointRadius: 10
+            },
+            {
+              label: 'Proportional Line',
+              data: [
+                {x: 0, y: 0},
+                {x: value1 * 1.2, y: value2 * 1.2}
+              ],
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              type: 'line'
+            }
+          ]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'X Values'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Y Values'
+              }
+            }
+          }
+        }
+      };
+
       resultObj = {
         type: 'Proportional Value',
         result: value2.toFixed(2),
@@ -157,6 +278,7 @@ const RatioAndProportion = () => {
     }
 
     setResult(resultObj);
+    setVisualizationData(visData);
 
     addToHistory({
       description: `${resultObj.type} calculation`,
@@ -264,6 +386,46 @@ const RatioAndProportion = () => {
     }
   };
 
+  const renderVisualization = () => {
+    if (!visualizationData) return null;
+
+    switch (visualizationData.type) {
+      case 'pie':
+        return (
+          <div className="visualization-container">
+            <h4>Distribution Visualization</h4>
+            <PieChart data={visualizationData.data} options={visualizationData.options} />
+            <p className="visualization-caption">
+              This pie chart shows how the total amount is divided according to the given ratio.
+            </p>
+          </div>
+        );
+      case 'bar':
+        return (
+          <div className="visualization-container">
+            <h4>Ratio Comparison</h4>
+            <BarChart data={visualizationData.data} options={visualizationData.options} />
+            <p className="visualization-caption">
+              This bar chart compares the original ratio values with the simplified version.
+            </p>
+          </div>
+        );
+      case 'scatter':
+        return (
+          <div className="visualization-container">
+            <h4>Proportional Relationship</h4>
+            <ScatterChart data={visualizationData.data} options={visualizationData.options} />
+            <p className="visualization-caption">
+              This scatter plot shows the proportional relationship between the values.
+              The line demonstrates how the values maintain the same ratio.
+            </p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <CalculatorBase
       title="Ratio and Proportion Calculator"
@@ -321,6 +483,8 @@ const RatioAndProportion = () => {
                   ))}
                 </div>
               )}
+
+              {renderVisualization()}
             </div>
           )}
         </>
