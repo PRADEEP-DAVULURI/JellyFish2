@@ -74,7 +74,7 @@ function App() {
         <Route path="/surds-and-indices" element={<SurdsAndIndices />} />
         <Route path="/logarithms" element={<Logarithms />} />
         <Route path="/simplification" element={<Simplification />} />
-        <Route path="/algebra-quadratic-equations" element={<AlgebraQuadraticEquations />} />
+        <Route path="/algebra-(quadratic-equations)" element={<AlgebraQuadraticEquations />} />
         <Route path="/financialcalculator" element={<FinancialCalculator />} />
       </Routes>
     </div>

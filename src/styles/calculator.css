@@ -8,13 +8,13 @@
   --apple-dark: #2d2d2d; /* Darker dark tone */
   --apple-light-grey: #e0e0e0; /* Lighter grey */
   --apple-grey: #a0a0a0; /* Medium grey */
-  --apple-bg: #1a1a1a; /* Deeper background */
+  --apple-bg: #1a1a1a0c; /* Deeper background */
   --accent-green: #34c759; /* Green accent */
 }
 
 body {
   margin: 0;
-  padding: 2rem 0;
+  padding: 1rem 0;
   min-height: calc(100vh - 4rem);
   display: flex;
   flex-direction: column;
@@ -103,11 +103,12 @@ body .wave4 {
 .glass-container {
   position: relative;
   background: transparent;
-  border-radius: 20px;
+  border-radius: 30px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
   z-index: 1;
+  
 }
 
 .glass-filter,
@@ -319,7 +320,7 @@ body .wave4 {
   position: relative;
   border-radius: 20px;
   z-index: 1;
-  color: black;
+  color: rgb(56, 54, 54);
 }
 
 .result h3, .formula-preview h4, .visualization-container h4, .visualization-section h4,

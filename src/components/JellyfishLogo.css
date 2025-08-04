@@ -1,205 +1,183 @@
-/* Jellyfish Styles */
-.jellyfish-container {
+/* JellyFish Logo System with Wave Text Animation */
+.jellyfish-glass-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 160px;
+  padding: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(20, 30, 40, 0.3);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    inset 0 0 10px rgba(255, 255, 255, 0.05);
+  z-index: 1000;
+  transform: scale(0.9);
+  transition: all 0.3s ease-out;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 2rem auto;
-  
 }
 
+/* JellyFish Body */
 .jellyfish {
-  width: 200px;
-  height: 140px;
+  width: 120px;
+  height: 84px;
   background: radial-gradient(circle at center, #1295a3, #f6f6f6);
   border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
-  box-shadow: 0 0 30px rgba(4, 217, 255, 0.834);
+  box-shadow: 
+    0 0 15px rgba(4, 217, 255, 0.6),
+    inset 0 -5px 10px rgba(255, 255, 255, 0.3);
   position: relative;
-  animation: pulse 2s infinite;
+  animation: gentlePulse 3s infinite ease-in-out;
 }
 
+/* Animated Wave Effect */
 .head-wave {
   position: absolute;
   width: 100%;
-  height: 10px;
-  background: rgba(246, 3, 3, 0);
+  height: 6px;
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.4) 50%, 
+    rgba(255,255,255,0) 100%);
   border-radius: 50%;
-  top: 90px;
-  filter: blur(5px);
+  top: 60px;
+  filter: blur(3px);
   animation: waveMotion 3s infinite ease-in-out;
 }
 
+/* Eyes */
 .eye {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   background: #000;
   border-radius: 50%;
-  top: 45px;
+  top: 32px;
 }
 
 .eye::after {
   content: '';
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
   background: white;
   border-radius: 50%;
-  top: 3px;
-  left: 3px;
+  top: 2px;
+  left: 2px;
 }
 
-.eye.left {
-  left: 50px;
-}
+.eye.left { left: 35px; }
+.eye.right { right: 35px; }
 
-.eye.right {
-  right: 50px;
-}
-
+/* Tentacles */
 .tentacle {
   position: absolute;
-  bottom: -60px;
-  width: 10px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(232, 244, 246, 0.8) 0%, rgba(224, 239, 240, 0) 100%);
+  width: 6px;
+  height: 60px;
+  background: radial-gradient(circle, 
+    rgba(232, 244, 246, 0.8) 0%, 
+    rgba(224, 239, 240, 0) 100%);
   border-radius: 50%;
+  bottom: -40px;
   animation: curly 3s infinite ease-in-out;
 }
 
-.tentacle:nth-child(4) { left: 30px; animation-delay: 0s; }
-.tentacle:nth-child(5) { left: 60px; animation-delay: 0.2s; }
-.tentacle:nth-child(6) { left: 90px; animation-delay: 0.4s; }
-.tentacle:nth-child(7) { left: 120px; animation-delay: 0.6s; }
-.tentacle:nth-child(8) { left: 150px; animation-delay: 0.8s; }
+.tentacle:nth-child(4) { left: 20px; animation-delay: 0s; }
+.tentacle:nth-child(5) { left: 50px; animation-delay: 0.2s; }
+.tentacle:nth-child(6) { left: 80px; animation-delay: 0.4s; }
+.tentacle:nth-child(7) { left: 95px; animation-delay: 0.6s; }
+.tentacle:nth-child(8) { left: 35px; animation-delay: 0.8s; }
 
-@keyframes curly {
-  0% { transform: rotate(0deg) translateY(0); }
-  25% { transform: rotate(10deg) translateY(5px); }
-  50% { transform: rotate(-10deg) translateY(10px); }
-  75% { transform: rotate(10deg) translateY(5px); }
-  100% { transform: rotate(0deg) translateY(0); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.9; }
-}
-
-@keyframes waveMotion {
-  0%, 100% { transform: scaleX(1); }
-  50% { transform: scaleX(1.2); }
-}
-
-/* Splitting.js Text Animation Styles */
+/* Logo Text with Wave Animation */
 .logo-text-container {
-  margin-top: 30px;
+  margin-top: 10px;
+  text-align: center;
 }
 
 .headline {
   font-family: 'Northwell', cursive;
-  color: rgb(230, 243, 243);
-  font-size: 2.5rem;
-  text-shadow: 0 0 10px cyan, 0 0 20px cyan;
-  perspective: 1000px;
+  font-size: 1.4rem;
+  color: rgba(230, 243, 243, 0.9);
+  text-shadow: 
+    0 0 5px rgba(0, 255, 255, 0.7),
+    0 0 10px rgba(0, 255, 255, 0.4);
+  letter-spacing: 1px;
   margin: 0;
+  padding: 0;
+  display: inline-block;
 }
 
-.word,
+/* Wave Animation for Text */
 .char {
-  animation-delay: var(--del);
-  animation-direction: var(--dir, normal);
-  animation-duration: var(--dur);
-  animation-iteration-count: var(--it, infinite);
-  animation-name: var(--name);
-  animation-timing-function: var(--tf);
-  animation-fill-mode: var(--fill, forwards);
   display: inline-block;
   position: relative;
-  transform-origin: 50% 100%;
-  z-index: 1;
+  animation: wave 3s infinite ease-in-out;
+  animation-delay: calc(var(--char-index) * 0.1s);
 }
 
-/* Floating animation */
-.headline--float .char {
-  --name: float;
-  --dur: 2200ms;
-  --del: calc(var(--char-index) * -0.5s);
-  --tf: ease-in-out; 
-  --dir: alternate;
-}
-
-.headline--float .char:nth-child(2n) {
-  --name: float-alt;
-}
-
-@keyframes float {
-  from {
-    transform: translate(2%, -10%) rotate(-1deg);
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
   }
-  to {
-    transform: translate(-2%, 5%) rotate(3deg);
-  }
-}
-
-@keyframes float-alt {
-  from {
-    transform: translate(0%, -5%) rotate(-1deg);
-  }
-  to {
-    transform: translate(2%, 10%) rotate(3deg);
-  }
-}
-
-/* Alternative animation options */
-.headline--jump .char {
-  --name: jump;
-  --dur: 800ms;
-  --del: calc(var(--char-index) * 0.075s);
-  --tf: cubic-bezier(0.165, 0.44, 0.64, 1);
-}
-
-@keyframes jump {
-  20% {
-    transform: translateY(2%) scaleY(0.9);
-  }
-  40% {
-    transform: translateY(-100%) scaleY(1.2);
+  25% {
+    transform: translateY(-8px) rotate(5deg);
   }
   50% {
-    transform: translateY(10%) scaleY(0.8);
+    transform: translateY(0) rotate(0deg);
   }
-  70% {
-    transform: translateY(-5%) scaleY(1);
-  }
-  80%, 100% {
-    transform: translateY(0) scaleY(1);
+  75% {
+    transform: translateY(4px) rotate(-3deg);
   }
 }
 
-.headline--twirl .char {
-  --name: twirl;
-  --dur: 6000ms;
-  --del: calc(var(--char-index) * 0.025s);
-  --tf: linear;
+/* JellyFish Animations */
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
-@keyframes twirl {
-  2.5% {
-    transform: rotateY(1turn);
+@keyframes waveMotion {
+  0%, 100% { transform: scaleX(1); opacity: 0.8; }
+  50% { transform: scaleX(1.1); opacity: 1; }
+}
+
+@keyframes curly {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(8deg) translateY(4px); }
+  50% { transform: rotate(-8deg) translateY(8px); }
+  75% { transform: rotate(8deg) translateY(4px); }
+}
+
+/* Scroll Behavior */
+.scrolling .jellyfish-glass-container {
+  transform: scale(0.85);
+  opacity: 0.9;
+  backdrop-filter: blur(6px);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .jellyfish-glass-container {
+    top: 10px;
+    right: 10px;
+    width: 140px;
+    padding: 8px;
   }
-  5% {
-    transform: rotateY(2turn);
+  
+  .jellyfish {
+    width: 100px;
+    height: 70px;
   }
-  10% {
-    transform: rotateY(3turn);
+  
+  .headline {
+    font-size: 1.2rem;
   }
-  20% {
-    transform: rotateY(4turn);
-  }
-  40% {
-    transform: rotateY(5turn);
-  }
-  70%, 100% {
-    transform: rotateY(6turn);
+  
+  .char {
+    animation-duration: 2.5s;
   }
 }

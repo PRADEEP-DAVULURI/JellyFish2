@@ -74,8 +74,8 @@ const ProblemsOnNumbers = () => {
     const steps = [];
     let resultObj = { type: '' };
 
-    switch(problemType) {
-      case 'sumDigits':
+    switch (problemType) {
+      case 'sumDigits': {
         const digits = Math.abs(num).toString().split('').map(Number);
         const sum = digits.reduce((acc, digit) => acc + digit, 0);
         steps.push(`Digits: ${digits.join(', ')}`);
@@ -86,8 +86,9 @@ const ProblemsOnNumbers = () => {
           result: sum
         };
         break;
+      }
 
-      case 'reverse':
+      case 'reverse': {
         const reversed = parseInt(Math.abs(num).toString().split('').reverse().join('')) * Math.sign(num);
         steps.push(`Original: ${num}`);
         steps.push(`Reversed: ${reversed}`);
@@ -96,8 +97,9 @@ const ProblemsOnNumbers = () => {
           result: reversed
         };
         break;
+      }
 
-      case 'isPalindrome':
+      case 'isPalindrome': {
         const str = Math.abs(num).toString();
         const isPal = str === str.split('').reverse().join('');
         steps.push(`Original: ${str}`);
@@ -110,8 +112,9 @@ const ProblemsOnNumbers = () => {
           reversed: str.split('').reverse().join('')
         };
         break;
+      }
 
-      case 'isArmstrong':
+      case 'isArmstrong': {
         const armStr = Math.abs(num).toString();
         const armDigits = armStr.split('').map(Number);
         const armSum = armDigits.reduce((sum, digit) => {
@@ -129,8 +132,9 @@ const ProblemsOnNumbers = () => {
           sum: armSum
         };
         break;
+      }
 
-      case 'isPrime':
+      case 'isPrime': {
         if (num < 2) {
           resultObj = {
             type: 'Prime Number Check',
@@ -156,8 +160,9 @@ const ProblemsOnNumbers = () => {
           explanation: isPrime ? 'No divisors other than 1 and itself' : 'Has divisors other than 1 and itself'
         };
         break;
+      }
 
-      case 'factorial':
+      case 'factorial': {
         if (num < 0) {
           resultObj = {
             type: 'Factorial Calculation',
@@ -175,11 +180,12 @@ const ProblemsOnNumbers = () => {
         resultObj = {
           type: 'Factorial Calculation',
           result: factorial,
-          calculation: Array.from({length: num}, (_, i) => i + 1).join(' × ')
+          calculation: Array.from({ length: num }, (_, i) => i + 1).join(' × ')
         };
         break;
+      }
 
-      case 'fibonacci':
+      case 'fibonacci': {
         const isPerfectSquare = (x) => {
           const s = Math.sqrt(x);
           return s * s === x;
@@ -194,8 +200,9 @@ const ProblemsOnNumbers = () => {
           explanation: isFib ? 'Satisfies Fibonacci number property' : 'Does not satisfy Fibonacci number property'
         };
         break;
+      }
 
-      case 'isPerfect':
+      case 'isPerfect': {
         if (num <= 0) {
           resultObj = {
             type: 'Perfect Number Check',
@@ -204,32 +211,29 @@ const ProblemsOnNumbers = () => {
           };
           break;
         }
-        let sums = 1; // 1 is a proper divisor for all numbers > 1
+        let perfectSum = 1;
         steps.push(`Proper divisors of ${num}: 1`);
         for (let i = 2; i <= Math.sqrt(num); i++) {
           if (num % i === 0) {
-            sum += i;
             const complement = num / i;
-            if (complement !== i) {
-              sum += complement;
-              steps.push(`Found divisors: ${i} and ${complement}`);
-            } else {
-              steps.push(`Found divisor: ${i}`);
-            }
+            perfectSum += i;
+            if (i !== complement) perfectSum += complement;
+            steps.push(`Found divisors: ${i}${i !== complement ? ` and ${complement}` : ''}`);
           }
         }
-        const isPerfect = sum === num && num !== 1;
-        steps.push(`Sum of proper divisors: ${sum}`);
+        const isPerfect = perfectSum === num && num !== 1;
+        steps.push(`Sum of proper divisors: ${perfectSum}`);
         steps.push(`Is perfect number? ${isPerfect ? 'Yes' : 'No'}`);
         resultObj = {
           type: 'Perfect Number Check',
           result: isPerfect ? 'Yes' : 'No',
-          sum: sum,
+          sum: perfectSum,
           explanation: isPerfect ? 'Sum of proper divisors equals the number' : 'Sum of proper divisors does not equal the number'
         };
         break;
+      }
 
-      case 'countDigits':
+      case 'countDigits': {
         const digitCount = Math.abs(num).toString().length;
         steps.push(`Number: ${Math.abs(num)}`);
         steps.push(`Digit count: ${digitCount}`);
@@ -239,8 +243,9 @@ const ProblemsOnNumbers = () => {
           number: Math.abs(num)
         };
         break;
+      }
 
-      case 'isHarshad':
+      case 'isHarshad': {
         if (num === 0) {
           resultObj = {
             type: 'Harshad Number Check',
@@ -263,6 +268,7 @@ const ProblemsOnNumbers = () => {
           explanation: isHarshad ? 'Number is divisible by the sum of its digits' : 'Number is not divisible by the sum of its digits'
         };
         break;
+      }
 
       default:
         break;
@@ -278,8 +284,8 @@ const ProblemsOnNumbers = () => {
   };
 
   return (
-    <CalculatorBase 
-      title="Number Problems Calculator" 
+    <CalculatorBase
+      title="Number Problems Calculator"
       description="Solve various number theory problems including digit sums, palindromes, prime checks, and more."
       examples={examples}
     >
@@ -325,7 +331,6 @@ const ProblemsOnNumbers = () => {
               {result.original && result.reversed && (
                 <p>Original: <strong>{result.original}</strong>, Reversed: <strong>{result.reversed}</strong></p>
               )}
-              
               {calculationSteps.length > 0 && (
                 <div className="step-by-step">
                   <h4>Calculation Steps:</h4>
