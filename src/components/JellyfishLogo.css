@@ -1,5 +1,6 @@
-/* JellyFish Logo System with Wave Text Animation */
+/* JellyFish Logo System - Complete Responsive Version */
 .jellyfish-glass-container {
+  /* Container Settings */
   position: fixed;
   top: 20px;
   right: 20px;
@@ -32,6 +33,8 @@
     inset 0 -5px 10px rgba(255, 255, 255, 0.3);
   position: relative;
   animation: gentlePulse 3s infinite ease-in-out;
+  overflow: visible;
+  z-index: 2;
 }
 
 /* Animated Wave Effect */
@@ -73,26 +76,48 @@
 .eye.left { left: 35px; }
 .eye.right { right: 35px; }
 
-/* Tentacles */
+/* Cute Tentacles - Desktop Version */
 .tentacle {
   position: absolute;
   width: 6px;
-  height: 60px;
+  height: 70px;
   background: radial-gradient(circle, 
-    rgba(232, 244, 246, 0.8) 0%, 
+    rgba(232, 244, 246, 0.9) 0%, 
+    rgba(180, 235, 242, 0.4) 50%,
     rgba(224, 239, 240, 0) 100%);
   border-radius: 50%;
-  bottom: -40px;
-  animation: curly 3s infinite ease-in-out;
+  bottom: -50px;
+  filter: drop-shadow(0 0 2px rgba(4, 217, 255, 0.5));
+  animation: cuteWiggle 3s infinite ease-in-out;
+  transform-origin: top center;
 }
 
 .tentacle:nth-child(4) { left: 20px; animation-delay: 0s; }
-.tentacle:nth-child(5) { left: 50px; animation-delay: 0.2s; }
-.tentacle:nth-child(6) { left: 80px; animation-delay: 0.4s; }
-.tentacle:nth-child(7) { left: 95px; animation-delay: 0.6s; }
-.tentacle:nth-child(8) { left: 35px; animation-delay: 0.8s; }
+.tentacle:nth-child(5) { left: 45px; animation-delay: 0.15s; }
+.tentacle:nth-child(6) { left: 70px; animation-delay: 0.3s; }
+.tentacle:nth-child(7) { left: 95px; animation-delay: 0.45s; }
+.tentacle:nth-child(8) { left: 100px; animation-delay: 0.6s; }
 
-/* Logo Text with Wave Animation */
+@keyframes cuteWiggle {
+  0%, 100% { 
+    transform: rotate(0deg) translateY(0) scaleY(1);
+    height: 70px;
+  }
+  25% { 
+    transform: rotate(10deg) translateY(-5px) scaleY(0.9);
+    height: 75px;
+  }
+  50% { 
+    transform: rotate(-8deg) translateY(3px) scaleY(1.1);
+    height: 65px;
+  }
+  75% { 
+    transform: rotate(5deg) translateY(-2px) scaleY(0.95);
+    height: 72px;
+  }
+}
+
+/* Logo Text */
 .logo-text-container {
   margin-top: 10px;
   text-align: center;
@@ -108,7 +133,6 @@
   letter-spacing: 1px;
   margin: 0;
   padding: 0;
-  display: inline-block;
 }
 
 /* Wave Animation for Text */
@@ -134,7 +158,7 @@
   }
 }
 
-/* JellyFish Animations */
+/* Core Animations */
 @keyframes gentlePulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.02); }
@@ -143,13 +167,6 @@
 @keyframes waveMotion {
   0%, 100% { transform: scaleX(1); opacity: 0.8; }
   50% { transform: scaleX(1.1); opacity: 1; }
-}
-
-@keyframes curly {
-  0%, 100% { transform: rotate(0deg) translateY(0); }
-  25% { transform: rotate(8deg) translateY(4px); }
-  50% { transform: rotate(-8deg) translateY(8px); }
-  75% { transform: rotate(8deg) translateY(4px); }
 }
 
 /* Scroll Behavior */
@@ -172,7 +189,31 @@
     width: 100px;
     height: 70px;
   }
-  
+
+  /* Mobile Tentacles */
+  .tentacle {
+    width: 5px;
+    height: 50px;
+    bottom: -40px;
+  }
+
+  .tentacle:nth-child(4) { left: 15px; }
+  .tentacle:nth-child(5) { left: 40px; }
+  .tentacle:nth-child(6) { left: 65px; }
+  .tentacle:nth-child(7) { left: 90px; }
+  .tentacle:nth-child(8) { left: 115px; }
+
+  @keyframes cuteWiggle {
+    0%, 100% { 
+      transform: rotate(0deg) translateY(0);
+      height: 50px;
+    }
+    50% { 
+      transform: rotate(-5deg) translateY(5px);
+      height: 55px;
+    }
+  }
+
   .headline {
     font-size: 1.2rem;
   }
